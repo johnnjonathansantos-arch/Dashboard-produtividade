@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel SAC · Julho 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="topbar-left">
+      <span class="pulse-dot"></span>
+      <div class="brand">
+        <h1>Indicadores de Atendimento</h1>
+        <p>Relatório operacional · Jira &amp; Multi360</p>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-stat">
+        <span class="label">Responsável</span>
+        <span class="value">Jonathan Santos</span>
+      </div>
+      <div class="topbar-stat">
+        <span class="label">Período</span>
+        <span class="value"> Julho 2026</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Elemento característico: registro mensal de atividades (tira de volume no estilo ECG). -->
+  <!-- KPI ROW -->
+  <section class="kpi-row">
+    <div class="kpi-card">
+      <span class="kpi-tag tag-jira">JIRA</span>
+      <span class="kpi-value" id="kpiJiraTotal">—</span>
+      <span class="kpi-label">Chamados abertos</span>
+    </div>
+    <div class="kpi-card">
+      <span class="kpi-tag tag-ok">TAXA</span>
+      <span class="kpi-value" id="kpiJiraConcluido">—</span>
+      <span class="kpi-label">Concluídos no período</span>
+    </div>
+    <div class="kpi-card">
+      <span class="kpi-tag tag-time">TEMPO</span>
+      <span class="kpi-value" id="kpiJiraTempo">—</span>
+      <span class="kpi-label">Tempo médio de resolução Jira</span>
+    </div>
+    <div class="kpi-card">
+      <span class="kpi-tag tag-multi">MULTI</span>
+      <span class="kpi-value" id="kpiMultiTotal">—</span>
+      <span class="kpi-label">Atendimentos via chat</span>
+    </div>
+    <div class="kpi-card">
+      <span class="kpi-tag tag-note">NOTA</span>
+      <span class="kpi-value" id="kpiMultiNota">—</span>
+      <span class="kpi-label">Satisfação média</span>
+    </div>
+  </section>
+
+  <!-- MAIN GRID -->
+  <main class="grid">
+
+    <!-- JIRA COLUMN -->
+    <section class="col">
+      <h2 class="col-title"><span class="tick tick-jira"></span>Jira · Atendimentos</h2>
+
+      <div class="panel-pair">
+        <div class="panel">
+          <h3>Status dos chamados</h3>
+          <canvas id="statusChart"></canvas>
+        </div>
+        <div class="panel">
+          <h3>Classificação de prioridade</h3>
+          <canvas id="classeChart"></canvas>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Chamados por cliente</h3>
+        <canvas id="clienteChart"></canvas>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h3>Lista de cards atendidos</h3>
+          <div class="filter-group">
+            <div class="filter-control">
+              <svg class="filter-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 5h18M6 12h12M10 19h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              <select id="jiraClienteFiltro" class="filter-select" aria-label="Filtrar chamados por cliente">
+                <option value="all">Todos os clientes</option>
+              </select>
+            </div>
+            <div class="filter-control">
+              <svg class="filter-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 5h18M6 12h12M10 19h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              <select id="jiraTipoFiltro" class="filter-select" aria-label="Filtrar chamados por tipo">
+                <option value="all">Todos os tipos</option>
+              </select>
+            </div>
+            <div class="filter-control">
+              <svg class="filter-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 5h18M6 12h12M10 19h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              <select id="jiraPrioFiltro" class="filter-select" aria-label="Filtrar chamados por prioridade">
+                <option value="all">Todas as prio.</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="table-scroll">
+          <table id="jiraTable">
+            <colgroup>
+              <col class="c-ticket"><col class="c-titulo"><col class="c-tipo">
+              <col class="c-cliente"><col class="c-status"><col class="c-prior"><col class="c-tempo">
+            </colgroup>
+            <thead>
+              <tr>
+                <th>Ticket</th>
+                <th>Título</th>
+                <th>Tipo</th>
+                <th>Cliente</th>
+                <th>Status</th>
+                <th>Prior.</th>
+                <th>Tempo</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- MULTI COLUMN -->
+    <section class="col">
+      <h2 class="col-title"><span class="tick tick-multi"></span>Multi360 · Atendimentos</h2>
+
+      <div class="panel">
+        <h3>Motivo do contato</h3>
+        <canvas id="motivoChart"></canvas>
+      </div>
+
+      <div class="panel-pair">
+        <div class="panel">
+          <h3>Distribuição das notas</h3>
+          <canvas id="notaChart"></canvas>
+        </div>
+        <div class="panel stat-panel">
+          <h3>Resumo do atendimento</h3>
+          <ul class="stat-list">
+            <li><span>Tempo médio por atendimento</span><strong id="statTempoMedio">—</strong></li>
+            <li><span>Total de avaliações recebidas</span><strong id="statTotalAvaliacoes">—</strong></li>
+            <li><span>Notas máximas (10)</span><strong id="statNota10">—</strong></li>
+            <li><span>Menor nota registrada</span><strong id="statNotaMin">—</strong></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h3>Lista de atendimentos</h3>
+          <div class="filter-group">
+            <div class="filter-control">
+              <svg class="filter-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 5h18M6 12h12M10 19h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              <select id="multiClienteFiltro" class="filter-select" aria-label="Filtrar atendimentos por cliente">
+                <option value="all">Todos os clientes</option>
+              </select>
+            </div>
+            <div class="filter-control">
+              <svg class="filter-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 5h18M6 12h12M10 19h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              <select id="multiMotivoFiltro" class="filter-select" aria-label="Filtrar atendimentos por motivo">
+                <option value="all">Todos os motivos</option>
+              </select>
+            </div>
+            <div class="filter-control">
+              <svg class="filter-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 5h18M6 12h12M10 19h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              <select id="multiNotaFiltro" class="filter-select" aria-label="Filtrar atendimentos por nota">
+                <option value="all">Todas as notas</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="table-scroll">
+          <table id="multiTable">
+            <colgroup>
+              <col class="c-protocolo"><col class="c-nome"><col class="c-motivo">
+              <col class="c-data"><col class="c-nota">
+            </colgroup>
+            <thead>
+              <tr>
+                <th>Protocolo</th>
+                <th>Cliente / Contato</th>
+                <th>Motivo</th>
+                <th>Data</th>
+                <th>Nota</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    <span>Painel gerado a partir dos indicadores do mês de Julho</span>
+  </footer>
+
+  <script src="data.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
