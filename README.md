@@ -42,7 +42,7 @@ Por ser um projeto estático (sem build ou dependências), basta:
 
 1. Clonar o repositório:
    ```bash
-  https://johnnjonathansantos-arch.github.io/Dashboard-produtividade/
+   https://johnnjonathansantos-arch.github.io/Dashboard-produtividade/
    ```
 2. Garantir que exista um arquivo `data.js` na raiz do projeto com os dados do período (ver seção abaixo).
 3. Abrir o arquivo `index.html` diretamente no navegador, ou servir a pasta com um servidor local, por exemplo:
