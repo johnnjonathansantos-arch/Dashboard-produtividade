@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Painel SAC · Julho 2026</title>
+<title>Painel SAC · Indicadores de Atendimento</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
@@ -25,7 +25,13 @@
       </div>
       <div class="topbar-stat">
         <span class="label">Período</span>
-        <span class="value"> Julho 2026</span>
+        <div class="mes-select-wrap">
+          <select id="mesFiltro" class="mes-select" aria-label="Selecionar mês">
+            <option value="Julho 2026">Julho 2026</option>
+            <option value="Agosto 2026">Agosto 2026</option>
+            <option value="Setembro 2026" selected>Setembro 2026</option>
+          </select>
+        </div>
       </div>
     </div>
   </header>
@@ -203,7 +209,7 @@
   </main>
 
   <footer class="footer">
-    <span>Painel gerado a partir dos indicadores do mês de Julho</span>
+    <span id="footerLabel">Painel gerado a partir dos indicadores do mês de Setembro 2026</span>
   </footer>
 
   <script src="data.js"></script>

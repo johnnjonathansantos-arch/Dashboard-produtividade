@@ -19,6 +19,9 @@ const COLORS = {
 
 const FONT = 'Inter, sans-serif';
 
+/* ---------- Estado global de filtro de mês ---------- */
+let mesSelecionado = 'Setembro 2026';
+
 /* ---------- Helpers de dados ---------- */
 
 function parseBrDate(str){
@@ -65,8 +68,6 @@ function sortEntriesDesc(obj){
 
 /* ---------- Helpers de canvas ---------- */
 
-// Prepara um canvas para desenho nítido em telas HiDPI.
-// Usa a largura real do elemento pai e a altura em CSS px passada.
 function setupCanvas(canvas, cssHeight){
   const dpr = window.devicePixelRatio || 1;
   const parent = canvas.parentElement;
@@ -108,17 +109,22 @@ function roundRect(ctx, x, y, w, h, r){
   ctx.closePath();
 }
 
-/* ---------- Gráfico de linha com área (Pulso do mês) ---------- */
-
 /* ---------- Donut chart com legenda ---------- */
 
 function drawDonutChart(canvasId, segments){
-  // segments: [{label, value, color}]
   const canvas = document.getElementById(canvasId);
   const cssHeight = 190;
   const { ctx, width, height } = setupCanvas(canvas, cssHeight);
 
   const total = segments.reduce((a,s) => a + s.value, 0);
+  if(total === 0){
+    ctx.fillStyle = COLORS.mute;
+    ctx.font = `12px ${FONT}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('Sem dados', width/2, height/2);
+    return;
+  }
   const radius = Math.min(height, width * 0.42) / 2 - 4;
   const cx = radius + 8;
   const cy = height / 2;
@@ -136,9 +142,8 @@ function drawDonutChart(canvasId, segments){
     startAngle += angle;
   });
 
-  // centro: total
   ctx.fillStyle = COLORS.ink;
-  ctx.font = `600 20px ${FONT.replace('Inter','Space Grotesk')}`;
+  ctx.font = `600 20px Space Grotesk, sans-serif`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(String(total), cx, cy - 6);
@@ -146,7 +151,6 @@ function drawDonutChart(canvasId, segments){
   ctx.font = `10px ${FONT}`;
   ctx.fillText('total', cx, cy + 12);
 
-  // legenda à direita
   const legendX = cx + radius + 22;
   const rowH = Math.min(22, (height - 8) / segments.length);
   let y = (height - rowH * segments.length) / 2 + rowH/2;
@@ -177,11 +181,19 @@ function drawDonutChart(canvasId, segments){
 /* ---------- Barra horizontal ---------- */
 
 function drawHBarChart(canvasId, items, color){
-  // items: [{label, value}] já ordenado desc
   const canvas = document.getElementById(canvasId);
   const rowH = 26;
-  const cssHeight = items.length * rowH + 10;
+  const cssHeight = Math.max(items.length * rowH + 10, 40);
   const { ctx, width, height } = setupCanvas(canvas, cssHeight);
+
+  if(items.length === 0){
+    ctx.fillStyle = COLORS.mute;
+    ctx.font = `12px ${FONT}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('Sem dados', width/2, height/2);
+    return;
+  }
 
   const maxVal = Math.max(...items.map(i => i.value));
   const labelW = Math.min(width * 0.42, 190);
@@ -212,10 +224,18 @@ function drawHBarChart(canvasId, items, color){
 /* ---------- Barra vertical ---------- */
 
 function drawVBarChart(canvasId, items){
-  // items: [{label, value, color}]
   const canvas = document.getElementById(canvasId);
   const cssHeight = 190;
   const { ctx, width, height } = setupCanvas(canvas, cssHeight);
+
+  if(items.length === 0){
+    ctx.fillStyle = COLORS.mute;
+    ctx.font = `12px ${FONT}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('Sem dados', width/2, height/2);
+    return;
+  }
 
   const padBottom = 22;
   const padTop = 22;
@@ -248,122 +268,38 @@ function drawVBarChart(canvasId, items){
   });
 }
 
-/* ---------- Cálculo dos KPIs ---------- */
-
 /* ---------- Animação de contadores para KPIs ---------- */
 
 function animateCounter(elementId, targetValue, duration = 800){
   const element = document.getElementById(elementId);
   if(!element) return;
-  
   const startTime = performance.now();
   const isFloat = typeof targetValue === 'string' && targetValue.includes('.');
   const numericTarget = parseFloat(targetValue);
-  
+
   function animate(currentTime){
     const elapsed = currentTime - startTime;
     const progress = Math.min(elapsed / duration, 1);
-    
-    // Easing: easeOutQuad
     const easeProgress = 1 - (1 - progress) * (1 - progress);
-    
     if(isFloat){
-      const current = numericTarget * easeProgress;
-      element.textContent = current.toFixed(1);
+      element.textContent = (numericTarget * easeProgress).toFixed(1);
     } else {
-      const current = Math.floor(numericTarget * easeProgress);
-      element.textContent = current;
+      element.textContent = Math.floor(numericTarget * easeProgress);
     }
-    
-    if(progress < 1){
-      requestAnimationFrame(animate);
-    }
+    if(progress < 1) requestAnimationFrame(animate);
   }
-  
   requestAnimationFrame(animate);
 }
 
-/* Aguardar um pouco para o DOM estar pronto, depois animar */
-setTimeout(() => {
-  animateCounter('kpiJiraTotal', jiraData.length, 900);
-  animateCounter('kpiJiraConcluido', `${jiraConcluidos.length}`, 900);
-  animateCounter('kpiMultiTotal', multiData.length, 900);
-  animateCounter('statTotalAvaliacoes', multiComNota.length, 900);
-  animateCounter('statNota10', multiComNota.filter(m => m.avaliacao === 10).length, 900);
-}, 100);
+/* ---------- Filtros de tabela (estado) ---------- */
+let jiraClienteFiltroValue = 'all';
+let jiraTipoFiltroValue = 'all';
+let jiraPrioFiltroValue = 'all';
+let multiClienteFiltroValue = 'all';
+let multiMotivoFiltroValue = 'all';
+let multiNotaFiltroValue = 'all';
 
-const jiraConcluidos = jiraData.filter(t => t.status === 'Concluido');
-const jiraTemposValidos = jiraData
-  .map(t => parseTempoMin(t.tempo))
-  .filter(v => v !== null && v > 0);
-const tempoMedioJiraMin = jiraTemposValidos.reduce((a,b) => a+b, 0) / jiraTemposValidos.length;
-
-const multiComNota = multiData.filter(m => m.avaliacao !== null && m.avaliacao !== undefined);
-const notaMedia = multiComNota.reduce((a,b) => a + b.avaliacao, 0) / multiComNota.length;
-
-document.getElementById('kpiJiraTotal').textContent = '0';
-document.getElementById('kpiJiraConcluido').textContent = '0/0';
-document.getElementById('kpiJiraTempo').textContent = formatMinutesAsDuration(tempoMedioJiraMin);
-document.getElementById('kpiMultiTotal').textContent = '0';
-document.getElementById('kpiMultiNota').textContent = notaMedia.toFixed(1);
-
-document.getElementById('statTempoMedio').textContent = '1h 02min';
-document.getElementById('statTotalAvaliacoes').textContent = '0';
-document.getElementById('statNota10').textContent = '0';
-document.getElementById('statNotaMin').textContent = Math.min(...multiComNota.map(m => m.avaliacao)).toFixed(1);
-
-/* ---------- Preparação dos dados para os gráficos ---------- */
-
-const statusColorMap = {
-  'Concluido': COLORS.teal,
-  'Aguarda Externo': COLORS.blue,
-  'Aguarda Dev': COLORS.amber,
-  'Cancelado': COLORS.rose,
-  'Em Análise': COLORS.amber
-};
-const statusCounts = sortEntriesDesc(countBy(jiraData, t => t.status));
-const statusSegments = statusCounts.map(([label, value]) => ({
-  label, value, color: statusColorMap[label] || COLORS.mute
-}));
-
-const classeColorMap = { 'A': COLORS.rose, 'B': COLORS.amber, 'C': COLORS.mute };
-const classeCounts = sortEntriesDesc(countBy(jiraData, t => t.classe));
-const classeSegments = classeCounts.map(([label, value]) => ({
-  label: `Classe ${label}`, value, color: classeColorMap[label] || COLORS.mute
-}));
-
-const clienteItems = sortEntriesDesc(countBy(jiraData, t => t.cliente))
-  .map(([label, value]) => ({ label, value }));
-
-const motivoItems = sortEntriesDesc(countBy(multiData, m => m.motivo))
-  .map(([label, value]) => ({ label, value }));
-
-const notaCounts = countBy(multiComNota, m => m.avaliacao.toFixed(0));
-const notaItems = Object.keys(notaCounts).sort((a,b) => a-b).map(n => ({
-  label: `Nota ${n}`,
-  value: notaCounts[n],
-  color: +n >= 9 ? COLORS.teal : COLORS.rose
-}));
-
-/* ---------- Renderização de todos os gráficos ---------- */
-
-function renderCharts(){
-  drawDonutChart('statusChart', statusSegments);
-  drawDonutChart('classeChart', classeSegments);
-  drawHBarChart('clienteChart', clienteItems, COLORS.amber);
-  drawHBarChart('motivoChart', motivoItems, COLORS.blue);
-  drawVBarChart('notaChart', notaItems);
-}
-
-renderCharts();
-
-let resizeTimer = null;
-window.addEventListener('resize', () => {
-  clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(renderCharts, 150);
-});
-
-/* ---------- Tabela Jira ---------- */
+/* ---------- Helpers de tabelas ---------- */
 
 function statusPillClass(status){
   switch(status){
@@ -377,31 +313,207 @@ function classePillClass(classe){
   return classe === 'A' ? 'pill-a' : classe === 'B' ? 'pill-b' : 'pill-c';
 }
 
-const jiraOrdenado = jiraData
-  .slice()
-  .sort((a,b) => (parseBrDate(b.criado) || 0) - (parseBrDate(a.criado) || 0));
+function extrairClienteMulti(nome){
+  if(!nome) return 'Não identificado';
+  const partes = nome.split(/\s*-\s*/);
+  return partes[0].trim() || 'Não identificado';
+}
 
-const jiraTbody = document.querySelector('#jiraTable tbody');
+/* ---------- Renderização principal — chamada ao trocar o mês ---------- */
 
-// State dos filtros
-let jiraClienteFiltroValue = 'all';
-let jiraTipoFiltroValue = 'all';
-let jiraPrioFiltroValue = 'all';
+function renderDashboard(){
+  // Filtra dados pelo mês selecionado
+  const jira = jiraData.filter(t => t.mes === mesSelecionado);
+  const multi = multiData.filter(m => m.mes === mesSelecionado);
 
-function renderJiraTable(){
-  jiraTbody.innerHTML = '';
-  let lista = jiraOrdenado;
-  
-  if(jiraClienteFiltroValue !== 'all'){
-    lista = lista.filter(t => t.cliente === jiraClienteFiltroValue);
-  }
-  if(jiraTipoFiltroValue !== 'all'){
-    lista = lista.filter(t => t.tipo === jiraTipoFiltroValue);
-  }
-  if(jiraPrioFiltroValue !== 'all'){
-    lista = lista.filter(t => t.classe === jiraPrioFiltroValue);
-  }
-  
+  const jiraConcluidos = jira.filter(t => t.status === 'Concluido');
+  const jiraTemposValidos = jira
+    .map(t => parseTempoMin(t.tempo))
+    .filter(v => v !== null && v > 0);
+  const tempoMedioJiraMin = jiraTemposValidos.length
+    ? jiraTemposValidos.reduce((a,b) => a+b, 0) / jiraTemposValidos.length
+    : null;
+
+  const multiComNota = multi.filter(m => m.avaliacao !== null && m.avaliacao !== undefined);
+  const notaMedia = multiComNota.length
+    ? multiComNota.reduce((a,b) => a + b.avaliacao, 0) / multiComNota.length
+    : null;
+
+  // -- KPIs --
+  document.getElementById('kpiJiraTotal').textContent = '0';
+  document.getElementById('kpiJiraConcluido').textContent = `0/${jira.length}`;
+  document.getElementById('kpiJiraTempo').textContent = formatMinutesAsDuration(tempoMedioJiraMin);
+  document.getElementById('kpiMultiTotal').textContent = '0';
+  document.getElementById('kpiMultiNota').textContent = notaMedia !== null ? notaMedia.toFixed(1) : '—';
+  document.getElementById('statTempoMedio').textContent = calcularTempoMedioMulti(multi);
+  document.getElementById('statTotalAvaliacoes').textContent = '0';
+  document.getElementById('statNota10').textContent = '0';
+  document.getElementById('statNotaMin').textContent = multiComNota.length
+    ? Math.min(...multiComNota.map(m => m.avaliacao)).toFixed(1)
+    : '—';
+
+  setTimeout(() => {
+    animateCounter('kpiJiraTotal', jira.length, 700);
+    animateCounter('kpiMultiTotal', multi.length, 700);
+    animateCounter('statTotalAvaliacoes', multiComNota.length, 700);
+    animateCounter('statNota10', multiComNota.filter(m => m.avaliacao === 10).length, 700);
+  }, 50);
+
+  // -- Atualiza label do KPI concluídos --
+  document.getElementById('kpiJiraConcluido').textContent = `${jiraConcluidos.length}/${jira.length}`;
+
+  // -- Footer --
+  document.getElementById('footerLabel').textContent =
+    `Painel gerado a partir dos indicadores do mês de ${mesSelecionado}`;
+
+  // -- Gráficos Jira --
+  const statusColorMap = {
+    'Concluido': COLORS.teal,
+    'Aguarda Externo': COLORS.blue,
+    'Aguarda Dev': COLORS.amber,
+    'Cancelado': COLORS.rose,
+    'Em Análise': COLORS.amber
+  };
+  const statusSegments = sortEntriesDesc(countBy(jira, t => t.status))
+    .map(([label, value]) => ({ label, value, color: statusColorMap[label] || COLORS.mute }));
+
+  const classeColorMap = { 'A': COLORS.rose, 'B': COLORS.amber, 'C': COLORS.mute };
+  const classeSegments = sortEntriesDesc(countBy(jira, t => t.classe))
+    .map(([label, value]) => ({ label: `Classe ${label}`, value, color: classeColorMap[label] || COLORS.mute }));
+
+  const clienteItems = sortEntriesDesc(countBy(jira, t => t.cliente))
+    .map(([label, value]) => ({ label, value }));
+
+  // -- Gráficos Multi --
+  const motivoItems = sortEntriesDesc(countBy(multi, m => m.motivo))
+    .map(([label, value]) => ({ label, value }));
+
+  const notaCounts = countBy(multiComNota, m => m.avaliacao.toFixed(0));
+  const notaItems = Object.keys(notaCounts).sort((a,b) => a-b).map(n => ({
+    label: `Nota ${n}`,
+    value: notaCounts[n],
+    color: +n >= 9 ? COLORS.teal : COLORS.rose
+  }));
+
+  drawDonutChart('statusChart', statusSegments);
+  drawDonutChart('classeChart', classeSegments);
+  drawHBarChart('clienteChart', clienteItems, COLORS.amber);
+  drawHBarChart('motivoChart', motivoItems, COLORS.blue);
+  drawVBarChart('notaChart', notaItems);
+
+  // -- Recarrega filtros das tabelas --
+  resetFiltros();
+  populateFiltrosJira(jira);
+  populateFiltrosMulti(multi);
+  renderJiraTable(jira);
+  renderMultiTable(multi);
+}
+
+/* ---------- Tempo médio Multi360 ---------- */
+
+function calcularTempoMedioMulti(multi){
+  const duracoes = multi.map(m => {
+    const inicio = parseBrDate(m.data);
+    // usamos dataFinalizacao se disponível; caso contrário, sem cálculo
+    return null;
+  }).filter(v => v !== null);
+  if(duracoes.length === 0) return '—';
+  const media = duracoes.reduce((a,b) => a+b, 0) / duracoes.length;
+  return formatMinutesAsDuration(media);
+}
+
+/* ---------- Filtros das tabelas ---------- */
+
+function resetFiltros(){
+  jiraClienteFiltroValue = 'all';
+  jiraTipoFiltroValue = 'all';
+  jiraPrioFiltroValue = 'all';
+  multiClienteFiltroValue = 'all';
+  multiMotivoFiltroValue = 'all';
+  multiNotaFiltroValue = 'all';
+  document.getElementById('jiraClienteFiltro').value = 'all';
+  document.getElementById('jiraTipoFiltro').value = 'all';
+  document.getElementById('jiraPrioFiltro').value = 'all';
+  document.getElementById('multiClienteFiltro').value = 'all';
+  document.getElementById('multiMotivoFiltro').value = 'all';
+  document.getElementById('multiNotaFiltro').value = 'all';
+}
+
+function populateFiltrosJira(jira){
+  const clientes = [...new Set(jira.map(t => t.cliente))].sort((a,b) => a.localeCompare(b, 'pt-BR'));
+  const tipos    = [...new Set(jira.map(t => t.tipo))].sort((a,b) => a.localeCompare(b, 'pt-BR'));
+  const prios    = [...new Set(jira.map(t => t.classe))].sort();
+
+  const clienteEl = document.getElementById('jiraClienteFiltro');
+  clienteEl.innerHTML = '<option value="all">Todos os clientes</option>';
+  clientes.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c; opt.textContent = c;
+    clienteEl.appendChild(opt);
+  });
+
+  const tipoEl = document.getElementById('jiraTipoFiltro');
+  tipoEl.innerHTML = '<option value="all">Todos os tipos</option>';
+  tipos.forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t; opt.textContent = t;
+    tipoEl.appendChild(opt);
+  });
+
+  const prioEl = document.getElementById('jiraPrioFiltro');
+  prioEl.innerHTML = '<option value="all">Todas as prio.</option>';
+  prios.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p; opt.textContent = `Prioridade ${p}`;
+    prioEl.appendChild(opt);
+  });
+}
+
+function populateFiltrosMulti(multi){
+  const clientes = [...new Set(multi.map(m => extrairClienteMulti(m.nome)))].sort((a,b) => a.localeCompare(b, 'pt-BR'));
+  const motivos  = [...new Set(multi.map(m => m.motivo))].sort((a,b) => a.localeCompare(b, 'pt-BR'));
+
+  const multiComNota = multi.filter(m => m.avaliacao !== null && m.avaliacao !== undefined);
+  const notasUnicas = ['sem-nota', ...([...new Set(multiComNota.map(m => m.avaliacao.toString()))].sort((a,b) => parseFloat(b)-parseFloat(a)))];
+
+  const clienteEl = document.getElementById('multiClienteFiltro');
+  clienteEl.innerHTML = '<option value="all">Todos os clientes</option>';
+  clientes.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c; opt.textContent = c;
+    clienteEl.appendChild(opt);
+  });
+
+  const motivoEl = document.getElementById('multiMotivoFiltro');
+  motivoEl.innerHTML = '<option value="all">Todos os motivos</option>';
+  motivos.forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m; opt.textContent = m;
+    motivoEl.appendChild(opt);
+  });
+
+  const notaEl = document.getElementById('multiNotaFiltro');
+  notaEl.innerHTML = '<option value="all">Todas as notas</option>';
+  notasUnicas.forEach(n => {
+    const opt = document.createElement('option');
+    opt.value = n;
+    opt.textContent = n === 'sem-nota' ? 'Sem nota' : `Nota ${n}`;
+    notaEl.appendChild(opt);
+  });
+}
+
+/* ---------- Tabela Jira ---------- */
+
+function renderJiraTable(jiraFiltrado){
+  const source = jiraFiltrado || jiraData.filter(t => t.mes === mesSelecionado);
+  let lista = source.slice().sort((a,b) => (parseBrDate(b.criado)||0) - (parseBrDate(a.criado)||0));
+
+  if(jiraClienteFiltroValue !== 'all') lista = lista.filter(t => t.cliente === jiraClienteFiltroValue);
+  if(jiraTipoFiltroValue !== 'all')    lista = lista.filter(t => t.tipo === jiraTipoFiltroValue);
+  if(jiraPrioFiltroValue !== 'all')    lista = lista.filter(t => t.classe === jiraPrioFiltroValue);
+
+  const tbody = document.querySelector('#jiraTable tbody');
+  tbody.innerHTML = '';
   lista.forEach((t, index) => {
     const tr = document.createElement('tr');
     tr.style.animationDelay = `${index * 0.03}s`;
@@ -415,86 +527,18 @@ function renderJiraTable(){
       <td><span class="pill ${classePillClass(t.classe)}">${t.classe}</span></td>
       <td class="mono">${t.tempo}</td>
     `;
-    jiraTbody.appendChild(tr);
+    tbody.appendChild(tr);
   });
 }
 
-const jiraClientes = [...new Set(jiraData.map(t => t.cliente))].sort((a,b) => a.localeCompare(b, 'pt-BR'));
-const jiraTipos = [...new Set(jiraData.map(t => t.tipo))].sort((a,b) => a.localeCompare(b, 'pt-BR'));
+/* ---------- Tabela Multi360 ---------- */
 
-const jiraClienteFiltroEl = document.getElementById('jiraClienteFiltro');
-jiraClientes.forEach(c => {
-  const opt = document.createElement('option');
-  opt.value = c;
-  opt.textContent = c;
-  jiraClienteFiltroEl.appendChild(opt);
-});
+function renderMultiTable(multiFiltrado){
+  const source = multiFiltrado || multiData.filter(m => m.mes === mesSelecionado);
+  let lista = source.slice().sort((a,b) => (parseBrDate(b.data)||0) - (parseBrDate(a.data)||0));
 
-const jiraTipoFiltroEl = document.getElementById('jiraTipoFiltro');
-jiraTipos.forEach(t => {
-  const opt = document.createElement('option');
-  opt.value = t;
-  opt.textContent = t;
-  jiraTipoFiltroEl.appendChild(opt);
-});
-
-jiraClienteFiltroEl.addEventListener('change', (e) => {
-  jiraClienteFiltroValue = e.target.value;
-  renderJiraTable();
-});
-
-jiraTipoFiltroEl.addEventListener('change', (e) => {
-  jiraTipoFiltroValue = e.target.value;
-  renderJiraTable();
-});
-
-const jiraPrios = [...new Set(jiraData.map(t => t.classe))].sort((a,b) => a.localeCompare(b, 'pt-BR'));
-
-const jiraPrioFiltroEl = document.getElementById('jiraPrioFiltro');
-jiraPrios.forEach(p => {
-  const opt = document.createElement('option');
-  opt.value = p;
-  opt.textContent = `Prioridade ${p}`;
-  jiraPrioFiltroEl.appendChild(opt);
-});
-
-jiraPrioFiltroEl.addEventListener('change', (e) => {
-  jiraPrioFiltroValue = e.target.value;
-  renderJiraTable();
-});
-
-renderJiraTable();
-
-/* ---------- Tabela Multichat ---------- */
-
-// O nome vem no formato "Cliente - Contato"; extrai o cliente para o filtro.
-function extrairClienteMulti(nome){
-  if(!nome) return 'Não identificado';
-  const partes = nome.split(/\s*-\s*/);
-  return partes[0].trim() || 'Não identificado';
-}
-
-const multiOrdenado = multiData
-  .slice()
-  .sort((a,b) => (parseBrDate(b.data) || 0) - (parseBrDate(a.data) || 0));
-
-const multiTbody = document.querySelector('#multiTable tbody');
-
-// State dos filtros
-let multiClienteFiltroValue = 'all';
-let multiMotivoFiltroValue = 'all';
-let multiNotaFiltroValue = 'all';
-
-function renderMultiTable(){
-  multiTbody.innerHTML = '';
-  let lista = multiOrdenado;
-  
-  if(multiClienteFiltroValue !== 'all'){
-    lista = lista.filter(m => extrairClienteMulti(m.nome) === multiClienteFiltroValue);
-  }
-  if(multiMotivoFiltroValue !== 'all'){
-    lista = lista.filter(m => m.motivo === multiMotivoFiltroValue);
-  }
+  if(multiClienteFiltroValue !== 'all') lista = lista.filter(m => extrairClienteMulti(m.nome) === multiClienteFiltroValue);
+  if(multiMotivoFiltroValue !== 'all')  lista = lista.filter(m => m.motivo === multiMotivoFiltroValue);
   if(multiNotaFiltroValue !== 'all'){
     if(multiNotaFiltroValue === 'sem-nota'){
       lista = lista.filter(m => m.avaliacao === null || m.avaliacao === undefined);
@@ -502,7 +546,9 @@ function renderMultiTable(){
       lista = lista.filter(m => m.avaliacao !== null && m.avaliacao !== undefined && m.avaliacao.toString() === multiNotaFiltroValue);
     }
   }
-  
+
+  const tbody = document.querySelector('#multiTable tbody');
+  tbody.innerHTML = '';
   lista.forEach((m, index) => {
     const tr = document.createElement('tr');
     tr.style.animationDelay = `${index * 0.03}s`;
@@ -518,66 +564,61 @@ function renderMultiTable(){
       <td class="mono">${m.data}</td>
       <td>${notaHtml}</td>
     `;
-    multiTbody.appendChild(tr);
+    tbody.appendChild(tr);
   });
 }
 
-const multiClientes = [...new Set(multiData.map(m => extrairClienteMulti(m.nome)))].sort((a,b) => a.localeCompare(b, 'pt-BR'));
-const multiMotivos = [...new Set(multiData.map(m => m.motivo))].sort((a,b) => a.localeCompare(b, 'pt-BR'));
+/* ---------- Event listeners ---------- */
 
-// Extrair notas únicas: "sem-nota" (null) + valores numéricos ordenados
-const multiNotasRaw = multiData.map(m => m.avaliacao);
-const multiNotasSet = new Set();
-multiNotasRaw.forEach(n => {
-  if(n === null || n === undefined){
-    multiNotasSet.add('sem-nota');
-  } else {
-    multiNotasSet.add(n.toString());
-  }
-});
-const multiNotas = Array.from(multiNotasSet);
-// Ordenar: sem-nota primeiro, depois notas em ordem descendente
-const multiNotasUnique = ['sem-nota'].concat(
-  multiNotas.filter(n => n !== 'sem-nota').sort((a,b) => parseFloat(b) - parseFloat(a))
-);
-
-const multiClienteFiltroEl = document.getElementById('multiClienteFiltro');
-multiClientes.forEach(c => {
-  const opt = document.createElement('option');
-  opt.value = c;
-  opt.textContent = c;
-  multiClienteFiltroEl.appendChild(opt);
+document.getElementById('mesFiltro').addEventListener('change', (e) => {
+  mesSelecionado = e.target.value;
+  renderDashboard();
 });
 
-const multiMotivoFiltroEl = document.getElementById('multiMotivoFiltro');
-multiMotivos.forEach(m => {
-  const opt = document.createElement('option');
-  opt.value = m;
-  opt.textContent = m;
-  multiMotivoFiltroEl.appendChild(opt);
+document.getElementById('jiraClienteFiltro').addEventListener('change', (e) => {
+  jiraClienteFiltroValue = e.target.value;
+  renderJiraTable();
 });
-
-const multiNotaFiltroEl = document.getElementById('multiNotaFiltro');
-multiNotasUnique.forEach(n => {
-  const opt = document.createElement('option');
-  opt.value = n;
-  opt.textContent = n === 'sem-nota' ? 'Sem nota' : `Nota ${n}`;
-  multiNotaFiltroEl.appendChild(opt);
+document.getElementById('jiraTipoFiltro').addEventListener('change', (e) => {
+  jiraTipoFiltroValue = e.target.value;
+  renderJiraTable();
 });
-
-multiClienteFiltroEl.addEventListener('change', (e) => {
+document.getElementById('jiraPrioFiltro').addEventListener('change', (e) => {
+  jiraPrioFiltroValue = e.target.value;
+  renderJiraTable();
+});
+document.getElementById('multiClienteFiltro').addEventListener('change', (e) => {
   multiClienteFiltroValue = e.target.value;
   renderMultiTable();
 });
-
-multiMotivoFiltroEl.addEventListener('change', (e) => {
+document.getElementById('multiMotivoFiltro').addEventListener('change', (e) => {
   multiMotivoFiltroValue = e.target.value;
   renderMultiTable();
 });
-
-multiNotaFiltroEl.addEventListener('change', (e) => {
+document.getElementById('multiNotaFiltro').addEventListener('change', (e) => {
   multiNotaFiltroValue = e.target.value;
   renderMultiTable();
 });
 
-renderMultiTable();
+/* ---------- Redimensionamento ---------- */
+
+let resizeTimer = null;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    const jira  = jiraData.filter(t => t.mes === mesSelecionado);
+    const multi = multiData.filter(m => m.mes === mesSelecionado);
+    const statusColorMap = { 'Concluido': COLORS.teal, 'Aguarda Externo': COLORS.blue, 'Aguarda Dev': COLORS.amber, 'Cancelado': COLORS.rose, 'Em Análise': COLORS.amber };
+    const classeColorMap = { 'A': COLORS.rose, 'B': COLORS.amber, 'C': COLORS.mute };
+    drawDonutChart('statusChart', sortEntriesDesc(countBy(jira, t => t.status)).map(([l,v]) => ({ label: l, value: v, color: statusColorMap[l]||COLORS.mute })));
+    drawDonutChart('classeChart', sortEntriesDesc(countBy(jira, t => t.classe)).map(([l,v]) => ({ label: `Classe ${l}`, value: v, color: classeColorMap[l]||COLORS.mute })));
+    drawHBarChart('clienteChart', sortEntriesDesc(countBy(jira, t => t.cliente)).map(([l,v]) => ({ label: l, value: v })), COLORS.amber);
+    drawHBarChart('motivoChart',  sortEntriesDesc(countBy(multi, m => m.motivo)).map(([l,v]) => ({ label: l, value: v })), COLORS.blue);
+    const multiComNota = multi.filter(m => m.avaliacao !== null && m.avaliacao !== undefined);
+    const notaCounts = countBy(multiComNota, m => m.avaliacao.toFixed(0));
+    drawVBarChart('notaChart', Object.keys(notaCounts).sort((a,b) => a-b).map(n => ({ label: `Nota ${n}`, value: notaCounts[n], color: +n >= 9 ? COLORS.teal : COLORS.rose })));
+  }, 150);
+});
+
+/* ---------- Inicialização ---------- */
+renderDashboard();
