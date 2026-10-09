@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Painel SAC · Indicadores de Atendimento</title>
+<title>Painel SAC · Agosto 2026</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
@@ -14,7 +14,7 @@
     <div class="topbar-left">
       <span class="pulse-dot"></span>
       <div class="brand">
-        <h1>Indicadores de Atendimento</h1>
+        <h1>Indicadores de Produtividade</h1>
         <p>Relatório operacional · Jira &amp; Multi360</p>
       </div>
     </div>
@@ -25,18 +25,56 @@
       </div>
       <div class="topbar-stat">
         <span class="label">Período</span>
-        <div class="mes-select-wrap">
-          <select id="mesFiltro" class="mes-select" aria-label="Selecionar mês">
-            <option value="Julho 2026">Julho 2026</option>
-            <option value="Agosto 2026">Agosto 2026</option>
-            <option value="Setembro 2026" selected>Setembro 2026</option>
-          </select>
-        </div>
+        <span class="value" id="topbarPeriodo">—</span>
       </div>
     </div>
   </header>
 
-  <!-- Elemento característico: registro mensal de atividades (tira de volume no estilo ECG). -->
+  <!-- FILTRO DE PERÍODO -->
+  <section class="periodo-bar" role="search" aria-label="Filtro de período">
+
+    <div class="periodo-modos">
+      <label class="periodo-radio">
+        <input type="radio" name="periodoModo" value="mes" checked>
+        <span class="periodo-radio-label">Por mês</span>
+      </label>
+      <label class="periodo-radio">
+        <input type="radio" name="periodoModo" value="intervalo">
+        <span class="periodo-radio-label">Entre datas</span>
+      </label>
+      <label class="periodo-radio">
+        <input type="radio" name="periodoModo" value="todos">
+        <span class="periodo-radio-label">Todo o período</span>
+      </label>
+    </div>
+
+    <div class="periodo-campos">
+      <!-- Modo: Por mês -->
+      <div id="filtroMesWrap" class="periodo-campo-group">
+        <div class="filter-control">
+          <svg class="filter-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="2"/><path d="M3 9h18M8 2v4M16 2v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <select id="periodoMes" class="filter-select" aria-label="Selecionar mês" data-placeholder="Selecione o mês"></select>
+        </div>
+      </div>
+
+      <!-- Modo: Entre datas -->
+      <div id="filtroIntervaloWrap" class="periodo-campo-group" style="display:none;">
+        <div class="filter-control">
+          <svg class="filter-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="2"/><path d="M3 9h18M8 2v4M16 2v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <input type="date" id="periodoInicio" class="filter-input" aria-label="Data inicial">
+        </div>
+        <span class="periodo-sep">até</span>
+        <div class="filter-control">
+          <svg class="filter-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="2"/><path d="M3 9h18M8 2v4M16 2v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <input type="date" id="periodoFim" class="filter-input" aria-label="Data final">
+        </div>
+        <button id="btnAplicarFiltro" class="btn-aplicar" type="button">Aplicar</button>
+        <span id="periodoErro" class="periodo-erro" style="display:none;" role="alert"></span>
+      </div>
+    </div>
+
+  </section>
+
   <!-- KPI ROW -->
   <section class="kpi-row">
     <div class="kpi-card">
@@ -48,11 +86,6 @@
       <span class="kpi-tag tag-ok">TAXA</span>
       <span class="kpi-value" id="kpiJiraConcluido">—</span>
       <span class="kpi-label">Concluídos no período</span>
-    </div>
-    <div class="kpi-card">
-      <span class="kpi-tag tag-time">TEMPO</span>
-      <span class="kpi-value" id="kpiJiraTempo">—</span>
-      <span class="kpi-label">Tempo médio de resolução Jira</span>
     </div>
     <div class="kpi-card">
       <span class="kpi-tag tag-multi">MULTI</span>
@@ -209,7 +242,7 @@
   </main>
 
   <footer class="footer">
-    <span id="footerLabel">Painel gerado a partir dos indicadores do mês de Setembro 2026</span>
+    <span>Painel gerado a partir dos indicadores mensais do ano de 2026</span>
   </footer>
 
   <script src="data.js"></script>
