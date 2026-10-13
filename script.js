@@ -77,6 +77,10 @@ function sortEntriesDesc(obj) {
    HELPERS DE CANVAS
    ========================================================== */
 
+function isMobile() {
+  return window.innerWidth <= 640;
+}
+
 function setupCanvas(canvas, cssHeight) {
   const dpr      = window.devicePixelRatio || 1;
   const parent   = canvas.parentElement;
@@ -123,7 +127,7 @@ function roundRect(ctx, x, y, w, h, r) {
 function drawDonutChart(canvasId, segments) {
   const canvas    = document.getElementById(canvasId);
   if (!canvas) return;
-  const cssHeight = 190;
+  const cssHeight = isMobile() ? 150 : 190;
   const { ctx, width, height } = setupCanvas(canvas, cssHeight);
   const total     = segments.reduce((a, s) => a + s.value, 0);
 
@@ -201,7 +205,7 @@ function drawHBarChart(canvasId, items, color) {
     ctx.fillText('Sem dados para o período', width / 2, 20);
     return;
   }
-  const rowH    = 26;
+  const rowH    = isMobile() ? 22 : 26;
   const cssHeight = items.length * rowH + 10;
   const { ctx, width } = setupCanvas(canvas, cssHeight);
   const maxVal  = Math.max(...items.map(i => i.value));
@@ -230,7 +234,7 @@ function drawHBarChart(canvasId, items, color) {
 function drawVBarChart(canvasId, items) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
-  const cssHeight = 190;
+  const cssHeight = isMobile() ? 150 : 190;
   const { ctx, width, height } = setupCanvas(canvas, cssHeight);
 
   if (items.length === 0) {
