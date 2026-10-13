@@ -4,6 +4,16 @@
    Gráficos em <canvas> puro (sem bibliotecas externas).
    ========================================================= */
 
+/* -- Guard: garante que os dados do data.js foram carregados -- */
+if (typeof jiraData === 'undefined' || typeof multiData === 'undefined') {
+  document.body.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:Inter,sans-serif;color:#C23A5D;flex-direction:column;gap:12px;">
+      <strong style="font-size:1.2rem;">Erro ao carregar os dados</strong>
+      <span style="color:#64708C;font-size:.9rem;">O arquivo data.js não foi encontrado ou contém um erro de sintaxe.</span>
+    </div>`;
+  throw new Error('data.js não carregado — jiraData ou multiData indefinidos');
+}
+
 const COLORS = {
   amber:     '#FFC400',
   amberText: '#8A6100',
