@@ -175,6 +175,7 @@ h1,h2,h3{ font-family: var(--font-display); margin:0; }
 .tag-ok{ background: rgba(14,143,130,.12); color: var(--teal); }
 .tag-multi{ background: rgba(47,90,168,.12); color: var(--brand-soft); }
 .tag-note{ background: rgba(194,58,93,.12); color: var(--rose); }
+.tag-sla{ background: rgba(14,143,130,.12); color: var(--teal); }
 
 .kpi-value{ 
   font-family: var(--font-display); 
@@ -184,7 +185,18 @@ h1,h2,h3{ font-family: var(--font-display); margin:0; }
   color: var(--brand);
   animation: slideUp 0.8s ease-out 0.5s both;
 }
+/* Valor menor para textos de tempo (mais caracteres) */
+.kpi-value--sm{
+  font-size: 22px;
+}
 .kpi-label{ color: var(--mute); font-size: 12.5px; }
+/* Linha de suporte com contagem de chamados considerados */
+.kpi-sub{
+  font-size: 11px;
+  color: var(--teal);
+  font-family: var(--font-mono);
+  min-height: 14px;
+}
 
 /* ---------- Main grid ---------- */
 .grid{
@@ -331,6 +343,32 @@ h1,h2,h3{ font-family: var(--font-display); margin:0; }
   border: 1px solid var(--line);
 }
 
+/* ---------- Chart scroll (gráfico de barras com rolagem interna) ---------- */
+.chart-scroll {
+  max-height: 260px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  padding: 6px 4px 4px;
+  /* Scrollbar fina, discreta */
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+.chart-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.chart-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.chart-scroll::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 4px;
+}
+.chart-scroll canvas {
+  display: block;
+}
+
 /* Dica de scroll horizontal visível apenas em mobile */
 .table-scroll-wrap {
   position: relative;
@@ -430,6 +468,41 @@ td.titulo-cell{ white-space: normal; }
 .nota-baixa{ color: var(--rose); font-weight:600; }
 .nota-vazia{ color: var(--mute); }
 
+/* ---------- Painel SLA (Média de Tempo de Atendimento) ---------- */
+.sla-panel {
+  padding: 16px 22px;
+}
+.sla-panel-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.sla-label {
+  margin: 6px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.sla-values {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.sla-value {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--brand);
+  white-space: nowrap;
+}
+
+/* Quando origem = Multi, oculta o painel SLA na coluna Jira */
+.grid.origem-multi .sla-panel { display: none; }
+
 /* ---------- Footer ---------- */
 .footer{
   position: relative;
@@ -447,6 +520,18 @@ td.titulo-cell{ white-space: normal; }
 @media (max-width: 1100px){
   .kpi-row{ grid-template-columns: repeat(2, 1fr); }
   .grid{ grid-template-columns: 1fr; }
+
+  /* Em tela média, origem única: grid já é 1 coluna — remove max-width p/ usar largura total */
+  .grid.origem-jira,
+  .grid.origem-multi {
+    max-width: 100%;
+  }
+  /* KPIs com origem única: mantém centralização mas usa largura relativa */
+  .kpi-row.origem-jira,
+  .kpi-row.origem-multi {
+    grid-template-columns: repeat(2, 1fr);
+    justify-content: unset;
+  }
 }
 
 /* --- Tablet (≤ 768px) --- */
@@ -471,7 +556,7 @@ td.titulo-cell{ white-space: normal; }
   .brand h1{ font-size: 18px; }
 
   /* KPIs */
-  .kpi-row{ gap: 10px; }
+  .kpi-row{ gap: 10px; grid-template-columns: repeat(2, 1fr); }
   .kpi-card{ border-radius: 22px; padding: 14px 14px; }
   .kpi-value{ font-size: 24px; }
   .kpi-label{ font-size: 11.5px; }
@@ -585,6 +670,7 @@ td.titulo-cell{ white-space: normal; }
 
   /* Tabelas */
   .table-scroll{ max-height: 280px; }
+  .chart-scroll{ max-height: 200px; }
   thead th{ font-size: 10px; padding: 8px 9px; }
   tbody td{ font-size: 11.5px; padding: 8px 9px; }
 }
@@ -710,22 +796,38 @@ td.titulo-cell{ white-space: normal; }
    Visibilidade condicional das colunas por origem
    ========================================================== */
 
-/* Quando só Jira está ativo — coluna Multi some, Jira expande */
+/* Quando só Jira está ativo — coluna Multi some, Jira expande e centraliza */
 .grid.origem-jira .col:nth-child(2) { display: none; }
-.grid.origem-jira { grid-template-columns: 1fr; max-width: 860px; }
+.grid.origem-jira {
+  grid-template-columns: 1fr;
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+}
 
-/* Quando só Multi está ativo — coluna Jira some, Multi expande */
+/* Quando só Multi está ativo — coluna Jira some, Multi expande e centraliza */
 .grid.origem-multi .col:nth-child(1) { display: none; }
-.grid.origem-multi { grid-template-columns: 1fr; max-width: 860px; }
+.grid.origem-multi {
+  grid-template-columns: 1fr;
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+}
 
-/* KPI row — oculta cards irrelevantes por origem */
+/* KPI row — oculta cards irrelevantes por origem e centraliza */
 .kpi-row.origem-jira  .kpi-card:nth-child(3),
 .kpi-row.origem-jira  .kpi-card:nth-child(4) { display: none; }
-.kpi-row.origem-jira  { grid-template-columns: repeat(2, 1fr); }
+.kpi-row.origem-jira {
+  grid-template-columns: repeat(2, minmax(0, 360px));
+  justify-content: center;
+}
 
 .kpi-row.origem-multi .kpi-card:nth-child(1),
 .kpi-row.origem-multi .kpi-card:nth-child(2) { display: none; }
-.kpi-row.origem-multi { grid-template-columns: repeat(2, 1fr); }
+.kpi-row.origem-multi {
+  grid-template-columns: repeat(2, minmax(0, 360px));
+  justify-content: center;
+}
 
 /* Campos dinâmicos */
 .periodo-campos {

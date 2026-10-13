@@ -130,6 +130,18 @@
     <section class="col">
       <h2 class="col-title"><span class="tick tick-jira"></span>Jira · Atendimentos</h2>
 
+      <div class="panel sla-panel">
+        <div class="sla-panel-inner">
+          <div>
+            <span class="kpi-tag tag-sla">SLA</span>
+            <p class="sla-label">Média de Tempo de Atendimento</p>
+          </div>
+          <div class="sla-values">
+            <span class="sla-value" id="kpiJiraSlaMedio">—</span>
+          </div>
+        </div>
+      </div>
+
       <div class="panel-pair">
         <div class="panel">
           <h3>Status dos chamados</h3>
@@ -143,7 +155,9 @@
 
       <div class="panel">
         <h3>Chamados por cliente</h3>
-        <canvas id="clienteChart"></canvas>
+        <div class="chart-scroll">
+          <canvas id="clienteChart"></canvas>
+        </div>
       </div>
 
       <div class="panel">

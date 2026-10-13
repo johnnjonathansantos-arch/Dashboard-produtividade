@@ -358,6 +358,22 @@ function renderDashboard(jira, multi) {
   /* ---- KPIs ---- */
   const jiraConcluidos = jira.filter(t => t.status === 'Concluido');
 
+  // Média de SLA Jira (campo sla em minutos, somente valores >= 0 e não-nulos)
+  const jiraSlaValidos = jira.filter(t => t.sla !== null && t.sla !== undefined);
+  const jiraSlaMedioMin = jiraSlaValidos.length
+    ? jiraSlaValidos.reduce((a, t) => a + t.sla, 0) / jiraSlaValidos.length
+    : null;
+
+  // Exibe o indicador de média de SLA
+  const elSlaMedia = document.getElementById('kpiJiraSlaMedio');
+  if (elSlaMedia) {
+    if (jiraSlaValidos.length === 0) {
+      elSlaMedia.textContent = '—';
+    } else {
+      elSlaMedia.textContent = formatMinutesAsDuration(Math.round(jiraSlaMedioMin));
+    }
+  }
+
   const multiTemposValidos = multi
     .map(m => calcTempoAtendimentoMin(m.data, m.dataFinalizacao))
     .filter(v => v !== null);
