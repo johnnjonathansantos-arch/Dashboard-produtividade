@@ -68,6 +68,17 @@
   }
 }
 
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 html, body{
   margin:0;
   padding:0;
@@ -126,7 +137,7 @@ h1,h2,h3{ font-family: var(--font-display); margin:0; }
 .topbar-right{ display:flex; gap: 28px; }
 .topbar-stat{ display:flex; flex-direction:column; align-items:flex-end; }
 .topbar-stat .label{ font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--mute); }
-.topbar-stat .value{ font-family: var(--font-mono); font-size: 14px; margin-top: 2px; color: var(--ink); }
+.topbar-stat .value{ font-family: var(--font-mono); font-size: 14px; margin-top: 2px; color: var(--ink); transition: opacity 0.3s ease; }
 
 /* ---------- Ledger (signature element) - REMOVIDO ---------- */
 
@@ -226,6 +237,7 @@ h1,h2,h3{ font-family: var(--font-display); margin:0; }
   font-weight: 600;
   color: var(--brand);
   margin-bottom: 2px;
+  animation: fadeIn 0.6s ease-out 0.1s both;
 }
 .tick{ width: 4px; height: 18px; border-radius: 2px; display:inline-block; }
 .tick-jira{ background: var(--amber); }
@@ -329,10 +341,20 @@ h1,h2,h3{ font-family: var(--font-display); margin:0; }
   border-bottom: 1px dashed var(--line);
   padding-bottom: 10px;
   font-size: 13px;
+  animation: fadeSlideIn 0.45s ease-out both;
 }
+.stat-list li:nth-child(1){ animation-delay: 0.15s; }
+.stat-list li:nth-child(2){ animation-delay: 0.2s; }
+.stat-list li:nth-child(3){ animation-delay: 0.25s; }
+.stat-list li:nth-child(4){ animation-delay: 0.3s; }
 .stat-list li:last-child{ border-bottom:none; padding-bottom:0; }
 .stat-list span{ color: var(--mute); }
-.stat-list strong{ font-family: var(--font-mono); font-size: 15px; color: var(--brand); }
+.stat-list strong{
+  font-family: var(--font-mono);
+  font-size: 15px;
+  color: var(--brand);
+  transition: opacity 0.3s ease, transform 0.25s ease;
+}
 
 /* ---------- Tables ---------- */
 .table-scroll{
@@ -341,6 +363,7 @@ h1,h2,h3{ font-family: var(--font-display); margin:0; }
   overflow-x: hidden;
   border-radius: 16px;
   border: 1px solid var(--line);
+  transition: opacity 0.2s ease;
 }
 
 /* ---------- Chart scroll (gráfico de barras com rolagem interna) ---------- */
@@ -365,8 +388,10 @@ h1,h2,h3{ font-family: var(--font-display); margin:0; }
   background: var(--line);
   border-radius: 4px;
 }
+/* Canvas dentro do scroll não deve forçar o container a crescer */
 .chart-scroll canvas {
   display: block;
+  max-width: 100%;
 }
 
 /* Dica de scroll horizontal visível apenas em mobile */
@@ -454,6 +479,7 @@ td.titulo-cell{ white-space: normal; }
   font-size: 11px;
   font-weight: 600;
   white-space: nowrap;
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 .pill-concluido{ background: rgba(14,143,130,.12); color: var(--teal); }
 .pill-andamento{ background: rgba(47,90,168,.12); color: var(--brand-soft); }
@@ -498,6 +524,7 @@ td.titulo-cell{ white-space: normal; }
   letter-spacing: -0.01em;
   color: var(--brand);
   white-space: nowrap;
+  transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
 /* Quando origem = Multi, oculta o painel SLA na coluna Jira */
@@ -677,7 +704,25 @@ td.titulo-cell{ white-space: normal; }
 
 @media (prefers-reduced-motion: reduce){
   .pulse-dot{ animation: none; }
-  .kpi-card{ transition: none; }
+  .kpi-card{ transition: none; animation: none; opacity: 1; }
+  .kpi-value{ animation: none; }
+  .topbar{ animation: none; }
+  .periodo-bar{ animation: none; opacity: 1; }
+  .col{ animation: none; opacity: 1; }
+  .col-title{ animation: none; opacity: 1; }
+  .panel{ animation: none; transition: none; opacity: 1; }
+  .stat-list li{ animation: none; opacity: 1; }
+  .stat-list strong{ transition: none; }
+  .sla-value{ transition: none; }
+  .table-scroll{ transition: none; }
+  .topbar-stat .value{ transition: none; }
+  .filter-select{ transition: none; transform: none !important; }
+  .filter-input{ transition: none; transform: none !important; }
+  .btn-aplicar{ transition: none; transform: none !important; }
+  .periodo-radio-label{ transition: none; }
+  .pill{ transition: none; }
+  tbody tr{ transition: none; }
+  .table-row-animate{ animation: none; opacity: 1; }
 }
 
 /* ==========================================================

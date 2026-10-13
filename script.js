@@ -196,22 +196,55 @@ function drawDonutChart(canvasId, segments) {
 function drawHBarChart(canvasId, items, color) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
+
+  // Para gráficos de barra horizontal dentro de um .chart-scroll,
+  // a largura vem do painel pai (não do scroll container que pode estar clipado)
+  // e o canvas cresce livremente em altura — o overflow do container faz a rolagem.
+  const scrollContainer = canvas.parentElement; // .chart-scroll
+  const panel           = scrollContainer ? scrollContainer.parentElement : canvas.parentElement; // .panel
+
   if (items.length === 0) {
-    const { ctx, width, height } = setupCanvas(canvas, 40);
+    const dpr = window.devicePixelRatio || 1;
+    const ps  = getComputedStyle(panel);
+    const padX = (parseFloat(ps.paddingLeft) || 0) + (parseFloat(ps.paddingRight) || 0);
+    const cssWidth = panel.clientWidth - padX;
+    canvas.style.width  = cssWidth + 'px';
+    canvas.style.height = '40px';
+    canvas.width  = Math.max(1, Math.round(cssWidth * dpr));
+    canvas.height = Math.max(1, Math.round(40 * dpr));
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, cssWidth, 40);
     ctx.fillStyle = COLORS.mute;
     ctx.font      = `12px ${FONT}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('Sem dados para o período', width / 2, 20);
+    ctx.fillText('Sem dados para o período', cssWidth / 2, 20);
     return;
   }
-  const rowH    = isMobile() ? 22 : 26;
+
+  const rowH      = isMobile() ? 22 : 26;
   const cssHeight = items.length * rowH + 10;
-  const { ctx, width } = setupCanvas(canvas, cssHeight);
-  const maxVal  = Math.max(...items.map(i => i.value));
-  const labelW  = Math.min(width * 0.42, 190);
-  const barAreaW = width - labelW - 46;
-  const barX    = labelW;
+
+  // Largura: lida do painel (não do chart-scroll que pode ser menor)
+  const dpr = window.devicePixelRatio || 1;
+  const ps  = getComputedStyle(panel);
+  const padX = (parseFloat(ps.paddingLeft) || 0) + (parseFloat(ps.paddingRight) || 0);
+  const cssWidth = panel.clientWidth - padX;
+
+  // Aplica dimensões ao canvas — style.height força a altura total para o scroll
+  canvas.style.width  = cssWidth + 'px';
+  canvas.style.height = cssHeight + 'px';
+  canvas.width  = Math.max(1, Math.round(cssWidth * dpr));
+  canvas.height = Math.max(1, Math.round(cssHeight * dpr));
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, cssWidth, cssHeight);
+
+  const maxVal   = Math.max(...items.map(i => i.value));
+  const labelW   = Math.min(cssWidth * 0.42, 190);
+  const barAreaW = cssWidth - labelW - 46;
+  const barX     = labelW;
 
   ctx.textBaseline = 'middle';
   items.forEach((item, i) => {
@@ -297,6 +330,45 @@ function animateCounter(elementId, targetValue, duration = 800) {
   requestAnimationFrame(animate);
 }
 
+/**
+ * Atualiza um elemento de texto com um fade-out → troca → fade-in suave.
+ * Usado para valores que não são contadores numéricos (ex: tempo formatado, SLA).
+ */
+function animateValueUpdate(elementId, newValue) {
+  const el = document.getElementById(elementId);
+  if (!el) return;
+  // Sem motion → troca direta
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    el.textContent = newValue;
+    return;
+  }
+  el.style.transition = 'opacity 0.2s ease, transform 0.2s ease';
+  el.style.opacity  = '0';
+  el.style.transform = 'translateY(4px)';
+  setTimeout(() => {
+    el.textContent = newValue;
+    el.style.opacity  = '1';
+    el.style.transform = 'translateY(0)';
+  }, 200);
+}
+
+/**
+ * Faz um fade-out na tabela, executa o callback de atualização do DOM,
+ * e depois faz o fade-in. Evita troca brusca de conteúdo.
+ */
+function animateTableUpdate(tableId, updateFn) {
+  const wrap = document.querySelector(`#${tableId}`)?.closest('.table-scroll');
+  if (!wrap || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    updateFn();
+    return;
+  }
+  wrap.style.opacity = '0';
+  setTimeout(() => {
+    updateFn();
+    wrap.style.opacity = '1';
+  }, 180);
+}
+
 /* ==========================================================
    ESTADO DOS FILTROS DAS TABELAS
    ========================================================== */
@@ -364,15 +436,7 @@ function renderDashboard(jira, multi) {
     ? jiraSlaValidos.reduce((a, t) => a + t.sla, 0) / jiraSlaValidos.length
     : null;
 
-  // Exibe o indicador de média de SLA
-  const elSlaMedia = document.getElementById('kpiJiraSlaMedio');
-  if (elSlaMedia) {
-    if (jiraSlaValidos.length === 0) {
-      elSlaMedia.textContent = '—';
-    } else {
-      elSlaMedia.textContent = formatMinutesAsDuration(Math.round(jiraSlaMedioMin));
-    }
-  }
+  // Exibe o indicador de média de SLA com transição — tratado abaixo via animateValueUpdate
 
   const multiTemposValidos = multi
     .map(m => calcTempoAtendimentoMin(m.data, m.dataFinalizacao))
@@ -387,12 +451,15 @@ function renderDashboard(jira, multi) {
     ? multiComNota.reduce((a, b) => a + b.avaliacao, 0) / multiComNota.length
     : 0;
 
-  // Setar valores iniciais (sem animação) para nota/tempo Multi
-  document.getElementById('kpiMultiNota').textContent  = multiComNota.length ? notaMedia.toFixed(1) : '—';
-  document.getElementById('statTempoMedio').textContent = formatMinutesAsDuration(tempoMedioMultiMin);
-  document.getElementById('statNotaMin').textContent   = multiComNota.length
+  // Valores com transição suave de atualização
+  animateValueUpdate('kpiMultiNota',   multiComNota.length ? notaMedia.toFixed(1) : '—');
+  animateValueUpdate('kpiJiraSlaMedio', jiraSlaValidos.length
+    ? formatMinutesAsDuration(Math.round(jiraSlaMedioMin))
+    : '—');
+  animateValueUpdate('statTempoMedio', formatMinutesAsDuration(tempoMedioMultiMin));
+  animateValueUpdate('statNotaMin',    multiComNota.length
     ? Math.min(...multiComNota.map(m => m.avaliacao)).toFixed(0)
-    : '—';
+    : '—');
 
   // Contadores animados
   animateCounter('kpiJiraTotal',       jira.length,           900);
@@ -465,6 +532,7 @@ function classePillClass(classe) {
 }
 
 function renderJiraTable(jiraFiltrado) {
+  animateTableUpdate('jiraTable', () => {
   const tbody = document.querySelector('#jiraTable tbody');
   tbody.innerHTML = '';
 
@@ -498,6 +566,7 @@ function renderJiraTable(jiraFiltrado) {
     `;
     tbody.appendChild(tr);
   });
+  }); // fim animateTableUpdate
 }
 
 function rebuildJiraFilters(jiraFiltrado) {
@@ -544,6 +613,7 @@ function extrairClienteMulti(nome) {
 }
 
 function renderMultiTable(multiFiltrado) {
+  animateTableUpdate('multiTable', () => {
   const tbody = document.querySelector('#multiTable tbody');
   tbody.innerHTML = '';
 
@@ -585,6 +655,7 @@ function renderMultiTable(multiFiltrado) {
     `;
     tbody.appendChild(tr);
   });
+  }); // fim animateTableUpdate
 }
 
 function rebuildMultiFilters(multiFiltrado) {
@@ -788,7 +859,7 @@ function atualizarFooter(modo) {
       if (footer) footer.textContent = `Painel gerado a partir dos indicadores de ${fmt(ini)} a ${fmt(fim)}`;
     }
   }
-  if (topbar) topbar.textContent = label;
+  if (topbar) animateValueUpdate('topbarPeriodo', label);
 }
 
 // --- Controle de visibilidade dos campos do filtro ---
