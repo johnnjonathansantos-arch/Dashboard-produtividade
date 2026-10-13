@@ -31,8 +31,9 @@
   </header>
 
   <!-- FILTRO DE PERÍODO -->
-  <section class="periodo-bar" role="search" aria-label="Filtro de período">
+  <section class="periodo-bar" role="search" aria-label="Filtro de período e origem">
 
+    <!-- Grupo 1: modo de período -->
     <div class="periodo-modos">
       <label class="periodo-radio">
         <input type="radio" name="periodoModo" value="mes" checked>
@@ -48,6 +49,10 @@
       </label>
     </div>
 
+    <!-- Divisor visual -->
+    <span class="periodo-divider" aria-hidden="true"></span>
+
+    <!-- Grupo 2: campos dinâmicos do período -->
     <div class="periodo-campos">
       <!-- Modo: Por mês -->
       <div id="filtroMesWrap" class="periodo-campo-group">
@@ -71,6 +76,25 @@
         <button id="btnAplicarFiltro" class="btn-aplicar" type="button">Aplicar</button>
         <span id="periodoErro" class="periodo-erro" style="display:none;" role="alert"></span>
       </div>
+    </div>
+
+    <!-- Divisor visual -->
+    <span class="periodo-divider" aria-hidden="true"></span>
+
+    <!-- Grupo 3: filtro de origem -->
+    <div class="origem-modos" role="group" aria-label="Filtro por origem dos dados">
+      <label class="periodo-radio">
+        <input type="radio" name="origemModo" value="todos" checked>
+        <span class="periodo-radio-label origem-label-todos">Todos</span>
+      </label>
+      <label class="periodo-radio">
+        <input type="radio" name="origemModo" value="jira">
+        <span class="periodo-radio-label origem-label-jira">Jira</span>
+      </label>
+      <label class="periodo-radio">
+        <input type="radio" name="origemModo" value="multi">
+        <span class="periodo-radio-label origem-label-multi">Multi</span>
+      </label>
     </div>
 
   </section>

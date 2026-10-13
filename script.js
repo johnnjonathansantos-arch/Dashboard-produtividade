@@ -309,6 +309,45 @@ let multiMotivoFiltroValue  = 'all';
 let multiNotaFiltroValue    = 'all';
 
 /* ==========================================================
+   FILTRO DE ORIGEM (Jira / Multi / Todos)
+   ========================================================== */
+
+let origemFiltroValue = 'todos'; // 'todos' | 'jira' | 'multi'
+
+/**
+ * Aplica o filtro de origem sobre os arrays já filtrados por período.
+ * Retorna { jira, multi } com o array irrelevante zerado quando necessário.
+ */
+function filtrarPorOrigem(jira, multi) {
+  if (origemFiltroValue === 'jira')  return { jira, multi: [] };
+  if (origemFiltroValue === 'multi') return { jira: [], multi };
+  return { jira, multi };
+}
+
+/**
+ * Atualiza as classes CSS no grid e na kpi-row para mostrar/ocultar
+ * colunas e KPIs de acordo com a origem selecionada.
+ */
+function atualizarVisibilidadeOrigem() {
+  const grid    = document.querySelector('.grid');
+  const kpiRow  = document.querySelector('.kpi-row');
+
+  // Remove todas as classes de origem
+  ['origem-jira', 'origem-multi'].forEach(cls => {
+    grid.classList.remove(cls);
+    kpiRow.classList.remove(cls);
+  });
+
+  if (origemFiltroValue === 'jira') {
+    grid.classList.add('origem-jira');
+    kpiRow.classList.add('origem-jira');
+  } else if (origemFiltroValue === 'multi') {
+    grid.classList.add('origem-multi');
+    kpiRow.classList.add('origem-multi');
+  }
+}
+
+/* ==========================================================
    FUNÇÃO CENTRAL: renderDashboard
    Recebe os conjuntos já filtrados pelo período e redesenha
    KPIs, gráficos, estatísticas e tabelas.
@@ -684,12 +723,17 @@ function filtrarPorPeriodo(modo) {
 // --- Aplicar filtro e atualizar painel ---
 function aplicarFiltro() {
   const modo = document.querySelector('input[name="periodoModo"]:checked').value;
-  const { jira, multi } = filtrarPorPeriodo(modo);
+
+  // 1. Filtra por período
+  const porPeriodo = filtrarPorPeriodo(modo);
+
+  // 2. Aplica filtro de origem sobre o resultado do período
+  const { jira, multi } = filtrarPorOrigem(porPeriodo.jira, porPeriodo.multi);
 
   _currentJira  = jira;
   _currentMulti = multi;
 
-  // Reseta filtros de tabela ao trocar período
+  // 3. Reseta filtros de tabela ao trocar período/origem
   jiraClienteFiltroValue  = 'all';
   jiraTipoFiltroValue     = 'all';
   jiraPrioFiltroValue     = 'all';
@@ -697,9 +741,13 @@ function aplicarFiltro() {
   multiMotivoFiltroValue  = 'all';
   multiNotaFiltroValue    = 'all';
 
-  // Atualiza footer com rótulo do período ativo
+  // 4. Atualiza visibilidade das colunas/KPIs por origem
+  atualizarVisibilidadeOrigem();
+
+  // 5. Atualiza footer com rótulo do período ativo
   atualizarFooter(modo);
 
+  // 6. Redesenha o dashboard
   renderDashboard(jira, multi);
 }
 
@@ -747,6 +795,14 @@ document.querySelectorAll('input[name="periodoModo"]').forEach(radio => {
 
 document.getElementById('periodoMes').addEventListener('change', () => {
   aplicarFiltro();
+});
+
+// --- Listener do filtro de origem ---
+document.querySelectorAll('input[name="origemModo"]').forEach(radio => {
+  radio.addEventListener('change', () => {
+    origemFiltroValue = radio.value;
+    aplicarFiltro();
+  });
 });
 
 document.getElementById('periodoInicio').addEventListener('change', validarEAplicarIntervalo);

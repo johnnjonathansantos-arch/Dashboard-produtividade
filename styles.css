@@ -668,15 +668,64 @@ td.titulo-cell{ white-space: normal; }
   color: #fff;
 }
 
-/* Divisor entre modos e campos */
-.periodo-bar::after {
-  content: '';
+/* Divisor entre grupos da periodo-bar */
+.periodo-divider {
   display: block;
   width: 1px;
   height: 28px;
   background: var(--line);
   flex-shrink: 0;
+  align-self: center;
 }
+
+/* Grupo de rádios de origem */
+.origem-modos {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+  align-items: center;
+}
+
+/* Cores específicas por opção de origem */
+.periodo-radio input[type="radio"]:checked + .origem-label-jira {
+  background: var(--amber-text);
+  color: #fff;
+  border-color: var(--amber-text);
+  box-shadow: 0 2px 8px rgba(138,97,0,.25);
+}
+.periodo-radio input[type="radio"]:checked + .origem-label-multi {
+  background: var(--brand-soft);
+  color: #fff;
+  border-color: var(--brand-soft);
+  box-shadow: 0 2px 8px rgba(47,90,168,.28);
+}
+.periodo-radio input[type="radio"]:checked + .origem-label-todos {
+  background: var(--brand);
+  color: #fff;
+  border-color: var(--brand);
+  box-shadow: 0 2px 8px rgba(18,56,119,.25);
+}
+
+/* ==========================================================
+   Visibilidade condicional das colunas por origem
+   ========================================================== */
+
+/* Quando só Jira está ativo — coluna Multi some, Jira expande */
+.grid.origem-jira .col:nth-child(2) { display: none; }
+.grid.origem-jira { grid-template-columns: 1fr; max-width: 860px; }
+
+/* Quando só Multi está ativo — coluna Jira some, Multi expande */
+.grid.origem-multi .col:nth-child(1) { display: none; }
+.grid.origem-multi { grid-template-columns: 1fr; max-width: 860px; }
+
+/* KPI row — oculta cards irrelevantes por origem */
+.kpi-row.origem-jira  .kpi-card:nth-child(3),
+.kpi-row.origem-jira  .kpi-card:nth-child(4) { display: none; }
+.kpi-row.origem-jira  { grid-template-columns: repeat(2, 1fr); }
+
+.kpi-row.origem-multi .kpi-card:nth-child(1),
+.kpi-row.origem-multi .kpi-card:nth-child(2) { display: none; }
+.kpi-row.origem-multi { grid-template-columns: repeat(2, 1fr); }
 
 /* Campos dinâmicos */
 .periodo-campos {
@@ -770,8 +819,9 @@ td.titulo-cell{ white-space: normal; }
     align-items: flex-start;
     gap: 10px;
   }
-  .periodo-bar::after { display: none; }
+  .periodo-divider { display: none; }
   .periodo-modos { flex-wrap: wrap; }
+  .origem-modos { flex-wrap: wrap; }
   .filter-input { width: 140px; }
 }
 
@@ -780,4 +830,5 @@ td.titulo-cell{ white-space: normal; }
   .periodo-campo-group{ flex-direction: column; align-items: stretch; gap: 8px; }
   .filter-input{ width: 100%; box-sizing: border-box; }
   .periodo-sep{ align-self: center; }
+  .origem-modos { width: 100%; }
 }
