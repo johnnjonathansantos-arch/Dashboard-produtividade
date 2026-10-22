@@ -3,15 +3,23 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Painel SAC · Agosto 2026</title>
+<title>Painel SAC · apLIS</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
+  <!-- ===================== TOPBAR ===================== -->
   <header class="topbar">
     <div class="topbar-left">
+      <!-- Botão para abrir/fechar barra lateral -->
+      <button class="sidebar-toggle" id="sidebarToggle" aria-label="Abrir/fechar painel de filtros" aria-expanded="false" aria-controls="sidebar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect x="3" y="3" width="7" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
+          <path d="M14 7h7M14 12h7M14 17h7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
       <span class="pulse-dot"></span>
       <div class="brand">
         <h1>Indicadores de Produtividade</h1>
@@ -30,264 +38,425 @@
     </div>
   </header>
 
-  <!-- FILTRO DE PERÍODO -->
-  <section class="periodo-bar" role="search" aria-label="Filtro de período e origem">
+  <!-- ===================== LAYOUT PRINCIPAL ===================== -->
+  <div class="app-layout">
 
-    <!-- Grupo 1: modo de período -->
-    <div class="periodo-modos">
-      <label class="periodo-radio">
-        <input type="radio" name="periodoModo" value="mes" checked>
-        <span class="periodo-radio-label">Por mês</span>
-      </label>
-      <label class="periodo-radio">
-        <input type="radio" name="periodoModo" value="intervalo">
-        <span class="periodo-radio-label">Entre datas</span>
-      </label>
-      <label class="periodo-radio">
-        <input type="radio" name="periodoModo" value="todos">
-        <span class="periodo-radio-label">Todo o período</span>
-      </label>
-    </div>
+    <!-- ===================== BARRA LATERAL ===================== -->
+    <aside class="sidebar" id="sidebar" role="complementary" aria-label="Painel de filtros">
 
-    <!-- Divisor visual -->
-    <span class="periodo-divider" aria-hidden="true"></span>
-
-    <!-- Grupo 2: campos dinâmicos do período -->
-    <div class="periodo-campos">
-      <!-- Modo: Por mês -->
-      <div id="filtroMesWrap" class="periodo-campo-group">
-        <div class="filter-control">
-          <svg class="filter-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="2"/><path d="M3 9h18M8 2v4M16 2v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-          <select id="periodoMes" class="filter-select" aria-label="Selecionar mês" data-placeholder="Selecione o mês"></select>
+      <div class="sidebar-inner">
+        <div class="sidebar-header">
+          <span class="sidebar-title">Filtros</span>
+          <button class="sidebar-close" id="sidebarClose" aria-label="Fechar painel de filtros">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
         </div>
-      </div>
 
-      <!-- Modo: Entre datas -->
-      <div id="filtroIntervaloWrap" class="periodo-campo-group" style="display:none;">
-        <div class="filter-control">
-          <svg class="filter-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="2"/><path d="M3 9h18M8 2v4M16 2v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-          <input type="date" id="periodoInicio" class="filter-input" aria-label="Data inicial">
-        </div>
-        <span class="periodo-sep">até</span>
-        <div class="filter-control">
-          <svg class="filter-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="2"/><path d="M3 9h18M8 2v4M16 2v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-          <input type="date" id="periodoFim" class="filter-input" aria-label="Data final">
-        </div>
-        <button id="btnAplicarFiltro" class="btn-aplicar" type="button">Aplicar</button>
-        <span id="periodoErro" class="periodo-erro" style="display:none;" role="alert"></span>
-      </div>
-    </div>
-
-    <!-- Divisor visual -->
-    <span class="periodo-divider" aria-hidden="true"></span>
-
-    <!-- Grupo 3: filtro de origem -->
-    <div class="origem-modos" role="group" aria-label="Filtro por origem dos dados">
-      <label class="periodo-radio">
-        <input type="radio" name="origemModo" value="todos" checked>
-        <span class="periodo-radio-label origem-label-todos">Todos</span>
-      </label>
-      <label class="periodo-radio">
-        <input type="radio" name="origemModo" value="jira">
-        <span class="periodo-radio-label origem-label-jira">Jira</span>
-      </label>
-      <label class="periodo-radio">
-        <input type="radio" name="origemModo" value="multi">
-        <span class="periodo-radio-label origem-label-multi">Multi</span>
-      </label>
-    </div>
-
-  </section>
-
-  <!-- KPI ROW -->
-  <section class="kpi-row">
-    <div class="kpi-card">
-      <span class="kpi-tag tag-jira">JIRA</span>
-      <span class="kpi-value" id="kpiJiraTotal">—</span>
-      <span class="kpi-label">Chamados abertos</span>
-    </div>
-    <div class="kpi-card">
-      <span class="kpi-tag tag-ok">TAXA</span>
-      <span class="kpi-value" id="kpiJiraConcluido">—</span>
-      <span class="kpi-label">Concluídos no período</span>
-    </div>
-    <div class="kpi-card">
-      <span class="kpi-tag tag-multi">MULTI</span>
-      <span class="kpi-value" id="kpiMultiTotal">—</span>
-      <span class="kpi-label">Atendimentos via chat</span>
-    </div>
-    <div class="kpi-card">
-      <span class="kpi-tag tag-note">NOTA</span>
-      <span class="kpi-value" id="kpiMultiNota">—</span>
-      <span class="kpi-label">Satisfação média</span>
-    </div>
-  </section>
-
-  <!-- MAIN GRID -->
-  <main class="grid">
-
-    <!-- JIRA COLUMN -->
-    <section class="col">
-      <h2 class="col-title"><span class="tick tick-jira"></span>Jira · Atendimentos</h2>
-
-      <div class="panel sla-panel">
-        <div class="sla-panel-inner">
-          <div>
-            <span class="kpi-tag tag-sla">SLA</span>
-            <p class="sla-label">Média de Tempo de Atendimento</p>
-          </div>
-          <div class="sla-values">
-            <span class="sla-value" id="kpiJiraSlaMedio">—</span>
+        <!-- Seção: Modo de período -->
+        <div class="sidebar-section">
+          <span class="sidebar-section-label">Modo de período</span>
+          <div class="periodo-modos sidebar-modos" role="group" aria-label="Modo de período">
+            <label class="periodo-radio">
+              <input type="radio" name="periodoModo" value="mes" checked>
+              <span class="periodo-radio-label">Por mês</span>
+            </label>
+            <label class="periodo-radio">
+              <input type="radio" name="periodoModo" value="intervalo">
+              <span class="periodo-radio-label">Entre datas</span>
+            </label>
+            <label class="periodo-radio">
+              <input type="radio" name="periodoModo" value="todos">
+              <span class="periodo-radio-label">Todo o período</span>
+            </label>
           </div>
         </div>
-      </div>
 
-      <div class="panel-pair">
-        <div class="panel">
-          <h3>Status dos chamados</h3>
-          <canvas id="statusChart"></canvas>
-        </div>
-        <div class="panel">
-          <h3>Classificação de prioridade</h3>
-          <canvas id="classeChart"></canvas>
-        </div>
-      </div>
-
-      <div class="panel">
-        <h3>Chamados por cliente</h3>
-        <div class="chart-scroll">
-          <canvas id="clienteChart"></canvas>
-        </div>
-      </div>
-
-      <div class="panel">
-        <div class="panel-head">
-          <h3>Lista de cards atendidos</h3>
-          <div class="filter-group">
-            <div class="filter-control">
-              <svg class="filter-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 5h18M6 12h12M10 19h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-              <select id="jiraClienteFiltro" class="filter-select" aria-label="Filtrar chamados por cliente">
-                <option value="all">Todos os clientes</option>
-              </select>
-            </div>
-            <div class="filter-control">
-              <svg class="filter-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 5h18M6 12h12M10 19h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-              <select id="jiraTipoFiltro" class="filter-select" aria-label="Filtrar chamados por tipo">
-                <option value="all">Todos os tipos</option>
-              </select>
-            </div>
-            <div class="filter-control">
-              <svg class="filter-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 5h18M6 12h12M10 19h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-              <select id="jiraPrioFiltro" class="filter-select" aria-label="Filtrar chamados por prioridade">
-                <option value="all">Todas as prio.</option>
-              </select>
+        <!-- Seção: Campos de período -->
+        <div class="sidebar-section">
+          <span class="sidebar-section-label">Período</span>
+          <!-- Modo: Por mês -->
+          <div id="filtroMesWrap" class="periodo-campo-group">
+            <div class="filter-control filter-control--full">
+              <svg class="filter-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="2"/><path d="M3 9h18M8 2v4M16 2v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              <select id="periodoMes" class="filter-select filter-select--full" aria-label="Selecionar mês" data-placeholder="Selecione o mês"></select>
             </div>
           </div>
-        </div>
-        <div class="table-scroll-wrap">
-          <div class="table-scroll">
-          <table id="jiraTable">
-            <colgroup>
-              <col class="c-ticket"><col class="c-titulo"><col class="c-tipo">
-              <col class="c-cliente"><col class="c-status"><col class="c-prior"><col class="c-tempo">
-            </colgroup>
-            <thead>
-              <tr>
-                <th>Ticket</th>
-                <th>Título</th>
-                <th>Tipo</th>
-                <th>Cliente</th>
-                <th>Status</th>
-                <th>Prior.</th>
-                <th>Tempo</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
+          <!-- Modo: Entre datas -->
+          <div id="filtroIntervaloWrap" class="periodo-campo-group" style="display:none;">
+            <div class="filter-control filter-control--full">
+              <svg class="filter-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="2"/><path d="M3 9h18M8 2v4M16 2v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              <input type="date" id="periodoInicio" class="filter-input filter-input--full" aria-label="Data inicial">
+            </div>
+            <span class="periodo-sep sidebar-sep">até</span>
+            <div class="filter-control filter-control--full">
+              <svg class="filter-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="2"/><path d="M3 9h18M8 2v4M16 2v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              <input type="date" id="periodoFim" class="filter-input filter-input--full" aria-label="Data final">
+            </div>
+            <button id="btnAplicarFiltro" class="btn-aplicar btn-aplicar--full" type="button">Aplicar</button>
+            <span id="periodoErro" class="periodo-erro" style="display:none;" role="alert"></span>
           </div>
         </div>
-      </div>
-    </section>
 
-    <!-- MULTI COLUMN -->
-    <section class="col">
-      <h2 class="col-title"><span class="tick tick-multi"></span>Multi360 · Atendimentos</h2>
-
-      <div class="panel">
-        <h3>Motivo do contato</h3>
-        <canvas id="motivoChart"></canvas>
-      </div>
-
-      <div class="panel-pair">
-        <div class="panel">
-          <h3>Distribuição das notas</h3>
-          <canvas id="notaChart"></canvas>
-        </div>
-        <div class="panel stat-panel">
-          <h3>Resumo do atendimento</h3>
-          <ul class="stat-list">
-            <li><span>Tempo médio por atendimento</span><strong id="statTempoMedio">—</strong></li>
-            <li><span>Total de avaliações recebidas</span><strong id="statTotalAvaliacoes">—</strong></li>
-            <li><span>Notas máximas (10)</span><strong id="statNota10">—</strong></li>
-            <li><span>Menor nota registrada</span><strong id="statNotaMin">—</strong></li>
-          </ul>
-        </div>
-      </div>
-
-      <div class="panel">
-        <div class="panel-head">
-          <h3>Lista de atendimentos</h3>
-          <div class="filter-group">
-            <div class="filter-control">
-              <svg class="filter-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 5h18M6 12h12M10 19h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-              <select id="multiClienteFiltro" class="filter-select" aria-label="Filtrar atendimentos por cliente">
-                <option value="all">Todos os clientes</option>
-              </select>
-            </div>
-            <div class="filter-control">
-              <svg class="filter-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 5h18M6 12h12M10 19h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-              <select id="multiMotivoFiltro" class="filter-select" aria-label="Filtrar atendimentos por motivo">
-                <option value="all">Todos os motivos</option>
-              </select>
-            </div>
-            <div class="filter-control">
-              <svg class="filter-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 5h18M6 12h12M10 19h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-              <select id="multiNotaFiltro" class="filter-select" aria-label="Filtrar atendimentos por nota">
-                <option value="all">Todas as notas</option>
-              </select>
-            </div>
+        <!-- Seção: Origem dos dados -->
+        <div class="sidebar-section">
+          <span class="sidebar-section-label">Origem dos dados</span>
+          <div class="origem-modos sidebar-modos" role="group" aria-label="Filtro por origem dos dados">
+            <label class="periodo-radio">
+              <input type="radio" name="origemModo" value="todos" checked>
+              <span class="periodo-radio-label origem-label-todos">Todos</span>
+            </label>
+            <label class="periodo-radio">
+              <input type="radio" name="origemModo" value="jira">
+              <span class="periodo-radio-label origem-label-jira">Jira</span>
+            </label>
+            <label class="periodo-radio">
+              <input type="radio" name="origemModo" value="multi">
+              <span class="periodo-radio-label origem-label-multi">Multi</span>
+            </label>
           </div>
         </div>
-        <div class="table-scroll-wrap">
-          <div class="table-scroll">
-          <table id="multiTable">
-            <colgroup>
-              <col class="c-protocolo"><col class="c-nome"><col class="c-motivo">
-              <col class="c-data"><col class="c-nota">
-            </colgroup>
-            <thead>
-              <tr>
-                <th>Protocolo</th>
-                <th>Cliente / Contato</th>
-                <th>Motivo</th>
-                <th>Data</th>
-                <th>Nota</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
+
+        <!-- Seção: Comparação de relatórios -->
+        <div class="sidebar-section">
+          <div class="sidebar-section-toggle" id="compToggle" role="button" tabindex="0" aria-expanded="false" aria-controls="compPanel">
+            <span class="sidebar-section-label">Comparação</span>
+            <svg class="sidebar-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+
+          <div class="comp-panel" id="compPanel" style="display:none;">
+            <!-- Período A -->
+            <div class="comp-periodo-block">
+              <span class="comp-periodo-label comp-periodo-label--a">Período A</span>
+              <div class="comp-modo-group" role="group" aria-label="Modo do Período A">
+                <label class="periodo-radio comp-radio">
+                  <input type="radio" name="compModoA" value="mes" checked>
+                  <span class="periodo-radio-label">Por mês</span>
+                </label>
+                <label class="periodo-radio comp-radio">
+                  <input type="radio" name="compModoA" value="intervalo">
+                  <span class="periodo-radio-label">Entre datas</span>
+                </label>
+              </div>
+              <div id="compMesAWrap" class="filter-control filter-control--full" style="margin-top:6px;">
+                <svg class="filter-icon" width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="2"/><path d="M3 9h18M8 2v4M16 2v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                <select id="compMesA" class="filter-select filter-select--full" aria-label="Mês A para comparação"></select>
+              </div>
+              <div id="compIntervaloAWrap" style="display:none; margin-top:6px;">
+                <div class="filter-control filter-control--full">
+                  <svg class="filter-icon" width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="2"/><path d="M3 9h18M8 2v4M16 2v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                  <input type="date" id="compInicioA" class="filter-input filter-input--full" aria-label="Data inicial A">
+                </div>
+                <span class="periodo-sep sidebar-sep">até</span>
+                <div class="filter-control filter-control--full">
+                  <svg class="filter-icon" width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="2"/><path d="M3 9h18M8 2v4M16 2v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                  <input type="date" id="compFimA" class="filter-input filter-input--full" aria-label="Data final A">
+                </div>
+              </div>
+            </div>
+
+            <!-- Período B -->
+            <div class="comp-periodo-block">
+              <span class="comp-periodo-label comp-periodo-label--b">Período B</span>
+              <div class="comp-modo-group" role="group" aria-label="Modo do Período B">
+                <label class="periodo-radio comp-radio">
+                  <input type="radio" name="compModoB" value="mes" checked>
+                  <span class="periodo-radio-label">Por mês</span>
+                </label>
+                <label class="periodo-radio comp-radio">
+                  <input type="radio" name="compModoB" value="intervalo">
+                  <span class="periodo-radio-label">Entre datas</span>
+                </label>
+              </div>
+              <div id="compMesBWrap" class="filter-control filter-control--full" style="margin-top:6px;">
+                <svg class="filter-icon" width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="2"/><path d="M3 9h18M8 2v4M16 2v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                <select id="compMesB" class="filter-select filter-select--full" aria-label="Mês B para comparação"></select>
+              </div>
+              <div id="compIntervaloBWrap" style="display:none;">
+                <div class="filter-control filter-control--full">
+                  <svg class="filter-icon" width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="2"/><path d="M3 9h18M8 2v4M16 2v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                  <input type="date" id="compInicioB" class="filter-input filter-input--full" aria-label="Data inicial B">
+                </div>
+                <span class="periodo-sep sidebar-sep">até</span>
+                <div class="filter-control filter-control--full">
+                  <svg class="filter-icon" width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="2"/><path d="M3 9h18M8 2v4M16 2v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                  <input type="date" id="compFimB" class="filter-input filter-input--full" aria-label="Data final B">
+                </div>
+              </div>
+            </div>
+
+            <button id="btnComparar" class="btn-aplicar btn-aplicar--full" type="button">Comparar períodos</button>
           </div>
         </div>
-      </div>
-    </section>
 
-  </main>
+        <!-- Seção: Importação de Excel -->
+        <div class="sidebar-section">
+          <div class="sidebar-section-toggle" id="importToggle" role="button" tabindex="0" aria-expanded="false" aria-controls="importPanel">
+            <span class="sidebar-section-label">Importar Excel</span>
+            <svg class="sidebar-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
 
-  <footer class="footer">
-    <span>Painel gerado a partir dos indicadores mensais do ano de 2026</span>
-  </footer>
+          <div class="import-panel" id="importPanel" style="display:none;">
+            <p class="import-info">Importe arquivos <strong>.xlsx</strong> do Jira ou Multi360 para atualizar o dashboard. Os dados são carregados para a sessão atual.</p>
+
+            <div class="import-origem-group" role="group" aria-label="Origem do arquivo">
+              <label class="periodo-radio comp-radio">
+                <input type="radio" name="importOrigem" value="jira" checked>
+                <span class="periodo-radio-label origem-label-jira">Jira</span>
+              </label>
+              <label class="periodo-radio comp-radio">
+                <input type="radio" name="importOrigem" value="multi">
+                <span class="periodo-radio-label origem-label-multi">Multi</span>
+              </label>
+            </div>
+
+            <label class="import-file-label" for="importFile" aria-label="Selecionar arquivo Excel">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span id="importFileName">Selecionar arquivo .xlsx</span>
+              <input type="file" id="importFile" accept=".xlsx,.xls" style="display:none;" aria-label="Arquivo Excel">
+            </label>
+
+            <div id="importMesWrap" class="filter-control filter-control--full" style="margin-top:8px;">
+              <svg class="filter-icon" width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="2"/><path d="M3 9h18M8 2v4M16 2v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              <select id="importMesRef" class="filter-select filter-select--full" aria-label="Mês de referência da importação">
+                <option value="">Identificar automaticamente</option>
+              </select>
+            </div>
+
+            <button id="btnImportar" class="btn-aplicar btn-aplicar--full" type="button" disabled>Importar dados</button>
+            <div id="importStatus" class="import-status" role="status" aria-live="polite"></div>
+          </div>
+        </div>
+
+      </div><!-- /sidebar-inner -->
+    </aside>
+
+    <!-- Overlay para mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
+
+    <!-- ===================== CONTEÚDO PRINCIPAL ===================== -->
+    <div class="main-content" id="mainContent">
+
+      <!-- KPI ROW -->
+      <section class="kpi-row">
+        <div class="kpi-card">
+          <span class="kpi-tag tag-jira">JIRA</span>
+          <span class="kpi-value" id="kpiJiraTotal">—</span>
+          <span class="kpi-label">Chamados abertos</span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-tag tag-ok">TAXA</span>
+          <span class="kpi-value" id="kpiJiraConcluido">—</span>
+          <span class="kpi-label">Concluídos no período</span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-tag tag-multi">MULTI</span>
+          <span class="kpi-value" id="kpiMultiTotal">—</span>
+          <span class="kpi-label">Atendimentos via chat</span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-tag tag-note">NOTA</span>
+          <span class="kpi-value" id="kpiMultiNota">—</span>
+          <span class="kpi-label">Satisfação média</span>
+        </div>
+      </section>
+
+      <!-- PAINEL DE COMPARAÇÃO (exibido quando ativo) -->
+      <section class="comp-result-panel" id="compResultPanel" style="display:none;" aria-label="Resultado da comparação de períodos">
+        <div class="comp-result-header">
+          <h2 class="comp-result-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M9 19V6l-2 2M9 6l2 2M15 5v13l2-2M15 18l-2-2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Comparação de Períodos
+          </h2>
+          <div class="comp-result-labels">
+            <span class="comp-badge comp-badge--a" id="compLabelA">Período A</span>
+            <span class="comp-badge comp-badge--b" id="compLabelB">Período B</span>
+          </div>
+          <button class="comp-close-btn" id="compCloseBtn" type="button" aria-label="Fechar comparação">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+        <div class="comp-result-grid" id="compResultGrid">
+          <!-- Preenchido via JS -->
+        </div>
+      </section>
+
+      <!-- MAIN GRID -->
+      <main class="grid">
+
+        <!-- JIRA COLUMN -->
+        <section class="col">
+          <h2 class="col-title"><span class="tick tick-jira"></span>Jira · Atendimentos</h2>
+
+          <div class="panel sla-panel">
+            <div class="sla-panel-inner">
+              <div>
+                <span class="kpi-tag tag-sla">SLA</span>
+                <p class="sla-label">Média de Tempo de Atendimento</p>
+              </div>
+              <div class="sla-values">
+                <span class="sla-value" id="kpiJiraSlaMedio">—</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel-pair">
+            <div class="panel">
+              <h3>Status dos chamados</h3>
+              <canvas id="statusChart"></canvas>
+            </div>
+            <div class="panel">
+              <h3>Classificação de prioridade</h3>
+              <canvas id="classeChart"></canvas>
+            </div>
+          </div>
+
+          <div class="panel">
+            <h3>Chamados por cliente</h3>
+            <div class="chart-scroll">
+              <canvas id="clienteChart"></canvas>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <h3>Lista de cards atendidos</h3>
+              <div class="filter-group">
+                <div class="filter-control">
+                  <svg class="filter-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 5h18M6 12h12M10 19h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                  <select id="jiraClienteFiltro" class="filter-select" aria-label="Filtrar chamados por cliente">
+                    <option value="all">Todos os clientes</option>
+                  </select>
+                </div>
+                <div class="filter-control">
+                  <svg class="filter-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 5h18M6 12h12M10 19h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                  <select id="jiraTipoFiltro" class="filter-select" aria-label="Filtrar chamados por tipo">
+                    <option value="all">Todos os tipos</option>
+                  </select>
+                </div>
+                <div class="filter-control">
+                  <svg class="filter-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 5h18M6 12h12M10 19h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                  <select id="jiraPrioFiltro" class="filter-select" aria-label="Filtrar chamados por prioridade">
+                    <option value="all">Todas as prio.</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div class="table-scroll-wrap">
+              <div class="table-scroll">
+              <table id="jiraTable">
+                <colgroup>
+                  <col class="c-ticket"><col class="c-titulo"><col class="c-tipo">
+                  <col class="c-cliente"><col class="c-status"><col class="c-prior"><col class="c-tempo">
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th>Ticket</th>
+                    <th>Título</th>
+                    <th>Tipo</th>
+                    <th>Cliente</th>
+                    <th>Status</th>
+                    <th>Prior.</th>
+                    <th>Tempo</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- MULTI COLUMN -->
+        <section class="col">
+          <h2 class="col-title"><span class="tick tick-multi"></span>Multi360 · Atendimentos</h2>
+
+          <div class="panel">
+            <h3>Motivo do contato</h3>
+            <canvas id="motivoChart"></canvas>
+          </div>
+
+          <div class="panel-pair">
+            <div class="panel">
+              <h3>Distribuição das notas</h3>
+              <canvas id="notaChart"></canvas>
+            </div>
+            <div class="panel stat-panel">
+              <h3>Resumo do atendimento</h3>
+              <ul class="stat-list">
+                <li><span>Tempo médio por atendimento</span><strong id="statTempoMedio">—</strong></li>
+                <li><span>Total de avaliações recebidas</span><strong id="statTotalAvaliacoes">—</strong></li>
+                <li><span>Notas máximas (10)</span><strong id="statNota10">—</strong></li>
+                <li><span>Menor nota registrada</span><strong id="statNotaMin">—</strong></li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <h3>Lista de atendimentos</h3>
+              <div class="filter-group">
+                <div class="filter-control">
+                  <svg class="filter-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 5h18M6 12h12M10 19h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                  <select id="multiClienteFiltro" class="filter-select" aria-label="Filtrar atendimentos por cliente">
+                    <option value="all">Todos os clientes</option>
+                  </select>
+                </div>
+                <div class="filter-control">
+                  <svg class="filter-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 5h18M6 12h12M10 19h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                  <select id="multiMotivoFiltro" class="filter-select" aria-label="Filtrar atendimentos por motivo">
+                    <option value="all">Todos os motivos</option>
+                  </select>
+                </div>
+                <div class="filter-control">
+                  <svg class="filter-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 5h18M6 12h12M10 19h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                  <select id="multiNotaFiltro" class="filter-select" aria-label="Filtrar atendimentos por nota">
+                    <option value="all">Todas as notas</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div class="table-scroll-wrap">
+              <div class="table-scroll">
+              <table id="multiTable">
+                <colgroup>
+                  <col class="c-protocolo"><col class="c-nome"><col class="c-motivo">
+                  <col class="c-data"><col class="c-nota">
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th>Protocolo</th>
+                    <th>Cliente / Contato</th>
+                    <th>Motivo</th>
+                    <th>Data</th>
+                    <th>Nota</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </main>
+
+      <footer class="footer">
+        <span>Painel gerado a partir dos indicadores mensais do ano de 2026</span>
+      </footer>
+
+    </div><!-- /main-content -->
+  </div><!-- /app-layout -->
 
   <script src="data.js" charset="UTF-8"></script>
   <script src="script.js" charset="UTF-8"></script>
+  <script src="excel-import.js" charset="UTF-8"></script>
 </body>
 </html>
