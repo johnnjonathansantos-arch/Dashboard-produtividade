@@ -906,7 +906,7 @@ const sidebarToggle   = document.getElementById('sidebarToggle');
 const sidebarClose    = document.getElementById('sidebarClose');
 const sidebarOverlay  = document.getElementById('sidebarOverlay');
 
-let sidebarOpen = true; // começa aberta
+let sidebarOpen = true; // começa aberta em desktop
 
 function setSidebarState(open) {
   sidebarOpen = open;
@@ -1212,27 +1212,55 @@ document.getElementById('compCloseBtn').addEventListener('click', () => {
 });
 
 /* ==========================================================
-   RESIZE
+   RESIZE — consolidado na seção de INICIALIZAÇÃO abaixo
    ========================================================== */
 
 let resizeTimer = null;
-window.addEventListener('resize', () => {
-  clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(() => {
-    renderDashboard(_currentJira, _currentMulti);
-    // Em desktop ao expandir a janela, garante sidebar visível
-    if (window.innerWidth > 900 && !sidebarOpen) {
-      // Não força — respeita a escolha do usuário
-    }
-    if (window.innerWidth > 900) {
-      sidebarOverlay.classList.remove('is-visible');
-    }
-  }, 150);
-});
 
 /* ==========================================================
    INICIALIZAÇÃO
    ========================================================== */
 
+/**
+ * Mede a altura real da topbar e ajusta o padding-top do app-layout
+ * e o top da sidebar/sticky, garantindo que a topbar fixed não sobreponha
+ * o conteúdo independente de quantas linhas ela ocupe.
+ * Em mobile (≤ 900px) a sidebar é position:fixed top:0, não precisa ajuste.
+ */
+function ajustarAlturaTopbar() {
+  const topbar    = document.querySelector('.topbar');
+  const appLayout = document.querySelector('.app-layout');
+  const sidebarEl = document.getElementById('sidebar');
+  if (!topbar || !appLayout) return;
+  const h = topbar.offsetHeight;
+  appLayout.style.paddingTop = h + 'px';
+  // Só ajusta top e height da sidebar em desktop (sticky)
+  if (sidebarEl && window.innerWidth > 900) {
+    sidebarEl.style.top    = h + 'px';
+    sidebarEl.style.height = `calc(100vh - ${h}px)`;
+  }
+}
+
 atualizarModoFiltro();
 aplicarFiltro();
+
+// Aguarda o layout estabilizar antes de medir a topbar
+requestAnimationFrame(() => {
+  // Em mobile, começa com sidebar fechada para não sobrepor o conteúdo
+  if (window.innerWidth <= 900) {
+    setSidebarState(false);
+  }
+  ajustarAlturaTopbar();
+});
+
+// Reavalia ao redimensionar (topbar pode mudar de altura em telas menores)
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    ajustarAlturaTopbar();
+    renderDashboard(_currentJira, _currentMulti);
+    if (window.innerWidth > 900) {
+      sidebarOverlay.classList.remove('is-visible');
+    }
+  }, 150);
+});

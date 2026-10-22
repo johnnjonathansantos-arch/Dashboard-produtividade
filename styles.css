@@ -71,6 +71,10 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
+html{
+  height: 100%;
+}
+
 html, body{
   margin:0; padding:0;
   max-width: 100%;
@@ -100,14 +104,21 @@ h1,h2,h3{ font-family: var(--font-display); margin:0; }
   align-items: center;
   flex-wrap: wrap;
   gap: 16px;
-  position: relative;
+  /* Fixa no topo para que a sidebar sticky funcione corretamente */
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
   z-index: 20;
   padding: 16px 28px 16px 24px;
   border-bottom: 1px solid var(--line);
-  background: rgba(227,232,240,0.92);
+  background: rgba(227,232,240,0.96);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   animation: fadeIn 0.6s ease-out;
+  /* Altura mínima garantida — usada no padding-top do app-layout */
+  min-height: 64px;
 }
 
 .topbar-left{ display:flex; align-items:center; gap:12px; }
@@ -171,17 +182,22 @@ h1,h2,h3{ font-family: var(--font-display); margin:0; }
    ========================================================= */
 .app-layout{
   display: flex;
-  min-height: calc(100vh - 64px);
+  align-items: stretch;
   position: relative;
+  /* padding-top inicial — o JS vai ajustar para a altura real da topbar */
+  padding-top: 64px;
+  min-height: 100vh;
 }
 
 /* =========================================================
    BARRA LATERAL (SIDEBAR)
    ========================================================= */
 .sidebar{
+  /* sticky dentro do flex row — requer align-self: flex-start */
   position: sticky;
-  top: 0;
-  height: calc(100vh - 64px);
+  top: 64px;            /* valor inicial — JS ajusta para a altura real da topbar */
+  align-self: flex-start;
+  height: calc(100vh - 64px); /* JS sobrescreve após medir a topbar */
   width: var(--sidebar-w);
   min-width: var(--sidebar-w);
   background: var(--panel);
@@ -207,6 +223,7 @@ h1,h2,h3{ font-family: var(--font-display); margin:0; }
   opacity: 0;
   pointer-events: none;
   border-right-width: 0;
+  overflow: hidden; /* impede que o inner de 280px vaze ao recolher */
 }
 
 .sidebar-inner{
@@ -338,7 +355,7 @@ h1,h2,h3{ font-family: var(--font-display); margin:0; }
   position: fixed;
   inset: 0;
   background: rgba(27,42,74,0.45);
-  z-index: 14;
+  z-index: 25;   /* entre a topbar (20) e o drawer (30) */
   opacity: 0;
   transition: opacity 0.28s ease;
 }
@@ -1114,9 +1131,12 @@ td.titulo-cell{ white-space: normal; }
     opacity: 1;
     pointer-events: none;
     border-right-width: 1px;
+    overflow: hidden;
   }
   .sidebar-overlay{ display: block; }
   .main-content{ padding: 20px 20px 48px; }
+  /* No mobile, app-layout não precisa compensar a topbar aqui
+     pois a sidebar é fixed e não empurra nada */
 }
 
 /* Tablet (≤ 768px) */
