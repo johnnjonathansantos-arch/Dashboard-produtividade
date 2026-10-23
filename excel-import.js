@@ -436,6 +436,25 @@ function detectarMesPredom(datas) {
 
 /* ---------- Normalização de registros ---------- */
 
+/**
+ * Converte texto de duração para minutos inteiros.
+ * Aceita: "2d 3h 15min", "3h 15min", "45min", "2d", "1h"
+ * Retorna null se não reconhecer o formato.
+ */
+function parseDurationToMinutes(str) {
+  if (!str || typeof str !== 'string') return null;
+  const s = str.trim().toLowerCase();
+  let total = 0;
+  let matched = false;
+  const dMatch = s.match(/(\d+)\s*d/);
+  const hMatch = s.match(/(\d+)\s*h/);
+  const mMatch = s.match(/(\d+)\s*min/);
+  if (dMatch) { total += parseInt(dMatch[1], 10) * 1440; matched = true; }
+  if (hMatch) { total += parseInt(hMatch[1], 10) * 60;   matched = true; }
+  if (mMatch) { total += parseInt(mMatch[1], 10);         matched = true; }
+  return matched ? total : null;
+}
+
 function normalizarRegistroJira(row, colMap, extrairClienteFn) {
   const get = (campo) => {
     const idx = colMap[campo];
@@ -457,8 +476,18 @@ function normalizarRegistroJira(row, colMap, extrairClienteFn) {
   const criado = normalizeDataExcel(criadoRaw) || '';
   const limite = normalizeDataExcel(limiteRaw) || '';
 
-  const slaNum = parseFloat(slaRaw);
-  const sla    = !isNaN(slaNum) && slaNum >= 0 ? Math.round(slaNum) : null;
+  // sla: aceita número direto (minutos) OU texto "Xd Xh Xmin" / "Xh Xmin"
+  let sla = null;
+  if (slaRaw) {
+    const slaNum = parseFloat(slaRaw);
+    if (!isNaN(slaNum) && slaNum >= 0) {
+      // Número direto — assume minutos
+      sla = Math.round(slaNum);
+    } else {
+      // Tenta parsear formato textual "Xd Xh Xmin" ou "Xh Xmin"
+      sla = parseDurationToMinutes(slaRaw);
+    }
+  }
 
   // Normaliza status
   const statusMap = {
@@ -664,10 +693,13 @@ btnImportar.addEventListener('click', async () => {
           titulo:  ['título', 'titulo', 'summary', 'resumo', 'assunto'],
           tipo:    ['tipo', 'type', 'issuetype'],
           status:  ['status'],
-          criado:  ['criado', 'created', 'abertura', 'data de criação', 'creation'],
-          limite:  ['limite', 'due', 'prazo', 'deadline'],
-          classe:  ['classe', 'class', 'priority', 'prioridade', 'classificação', 'classif'],
-          sla:     ['sla', 'tempo solução', 'tempo de solução'],
+          criado:  ['criado', 'created', 'abertura', 'data de criação', 'data criação',
+                    'data abertura', 'creation', 'dt criação', 'dt_criacao'],
+          limite:  ['limite', 'due', 'prazo', 'deadline', 'data limite', 'dt limite'],
+          classe:  ['classe', 'class', 'priority', 'prioridade', 'classificação',
+                    'classif', 'classificacao comercial', 'class. comercial'],
+          sla:     ['[sla] - tempo solução', '[sla] - tempo de solução', 'sla - tempo solução',
+                    'tempo solução', 'tempo de solução', 'sla', 'tempo sla'],
           cliente: ['cliente', 'client', 'laboratório', 'lab']
         });
         detectadoComo = 'jira';
@@ -683,9 +715,13 @@ btnImportar.addEventListener('click', async () => {
           protocolo:  ['protocolo', 'protocol', 'id', 'número', 'numero'],
           motivo:     ['motivo', 'reason', 'assunto', 'subject', 'tipo'],
           nome:       ['nome', 'name', 'cliente', 'client', 'contato', 'contact'],
-          data:       ['data início', 'data de início', 'data inicio', 'inicio', 'início', 'data', 'created', 'start'],
-          datafim:    ['data encerramento', 'encerramento', 'fim', 'end', 'finalização', 'finalizacao'],
-          avaliacao:  ['avaliação', 'avaliacao', 'nota', 'score', 'nps', 'rating']
+          data:       ['data início', 'data de início', 'data inicio', 'data abertura',
+                       'inicio', 'início', 'data', 'created', 'start', 'dt inicio', 'dt_inicio'],
+          datafim:    ['data encerramento', 'data finalização', 'data finalizacao',
+                       'encerramento', 'finalização', 'finalizacao', 'fim', 'end',
+                       'dt encerramento', 'dt_encerramento'],
+          avaliacao:  ['avaliação', 'avaliacao', 'nota', 'score', 'nps', 'rating',
+                       'nota de avaliação', 'nota de avaliacao']
         });
         detectadoComo = 'multi';
         for (let i = headerIdx + 1; i < rows.length; i++) {
@@ -731,13 +767,13 @@ btnImportar.addEventListener('click', async () => {
         return;
       }
 
-      // Confirmação se há substituição (conflito de mês)
       // Para Jira, como a chave é o ticket, não há substituição — só adição.
       _importedJira.push(...unicos);
+      salvarDadosImportados(); // persiste no localStorage
       mensagemFinal = `✓ ${totalImportados} chamado${totalImportados !== 1 ? 's' : ''} Jira importado${totalImportados !== 1 ? 's' : ''}` +
         (dup > 0 ? ` · ${dup} duplicata${dup !== 1 ? 's' : ''} ignorada${dup !== 1 ? 's' : ''}` : '') +
         (mesDetectado ? ` · Mês: ${labelMes(mesDetectado)}` : '') +
-        ' · Sessão atual';
+        ' · Salvo no navegador';
     } else {
       const { unicos, duplicatas: dup } = deduplicarMulti(getAllMulti(), registrosMulti);
       duplicatas       = dup;
@@ -753,10 +789,11 @@ btnImportar.addEventListener('click', async () => {
       }
 
       _importedMulti.push(...unicos);
+      salvarDadosImportados(); // persiste no localStorage
       mensagemFinal = `✓ ${totalImportados} atendimento${totalImportados !== 1 ? 's' : ''} Multi importado${totalImportados !== 1 ? 's' : ''}` +
         (dup > 0 ? ` · ${dup} duplicata${dup !== 1 ? 's' : ''} ignorada${dup !== 1 ? 's' : ''}` : '') +
         (mesDetectado ? ` · Mês: ${labelMes(mesDetectado)}` : '') +
-        ' · Sessão atual';
+        ' · Salvo no navegador';
     }
 
     setImportStatus(mensagemFinal, 'ok');
@@ -791,3 +828,38 @@ function _extrairClienteJiraFn(titulo) {
   const m = titulo.match(/^([^-–]+?)\s*[-–]/);
   return m ? m[1].trim() : titulo.split(' ')[0];
 }
+
+/* ==========================================================
+   LIMPAR DADOS IMPORTADOS
+   Remove todos os registros importados do localStorage e
+   da memória, depois reaplica os filtros com os dados base.
+   ========================================================== */
+
+document.getElementById('btnLimparImportados').addEventListener('click', () => {
+  const totalJira  = _importedJira.length;
+  const totalMulti = _importedMulti.length;
+
+  if (totalJira === 0 && totalMulti === 0) {
+    setImportStatus('Não há dados importados para limpar.', 'warn');
+    return;
+  }
+
+  const confirma = window.confirm(
+    `Isso removerá ${totalJira} registro(s) Jira e ${totalMulti} registro(s) Multi importados.\n\n` +
+    `Os dados do arquivo data.js (histórico base) não serão afetados.\n\nDeseja continuar?`
+  );
+  if (!confirma) return;
+
+  _importedJira.length  = 0;
+  _importedMulti.length = 0;
+  salvarDadosImportados();
+
+  // Atualiza selects de mês (podem sumir meses que vieram só de importações)
+  popularSelectMeses('periodoMes');
+  popularSelectMeses('compMesA');
+  popularSelectMeses('compMesB');
+  popularImportMeses();
+
+  aplicarFiltro();
+  setImportStatus('Dados importados removidos com sucesso.', 'ok');
+});

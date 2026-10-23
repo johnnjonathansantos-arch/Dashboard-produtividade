@@ -563,6 +563,339 @@ h1,h2,h3{ font-family: var(--font-display); margin:0; }
 .comp-delta-down{ color: var(--rose); }
 .comp-delta-neutral{ color: var(--mute); }
 
+/* =========================================================
+   SELETOR DE MESES NA SIDEBAR
+   ========================================================= */
+
+.comp-ano-wrap{
+  margin-bottom: 12px;
+}
+
+.comp-meses-wrap{
+  margin-bottom: 10px;
+}
+
+.comp-meses-header{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.comp-meses-header .sidebar-section-label{ margin-bottom: 0; }
+
+.comp-sel-todos{
+  font-family: var(--font-body);
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--brand-soft);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 3px 9px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+.comp-sel-todos:hover{
+  background: var(--brand-soft);
+  color: #fff;
+  border-color: var(--brand-soft);
+}
+
+/* Grade de checkboxes 3×4 para os 12 meses */
+.comp-meses-grid{
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 5px;
+}
+
+.comp-mes-label{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  cursor: pointer;
+}
+.comp-mes-label input[type="checkbox"]{
+  position: absolute;
+  opacity: 0;
+  width: 0; height: 0;
+  pointer-events: none;
+}
+.comp-mes-chip{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  color: var(--mute);
+  padding: 5px 4px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: var(--panel-alt);
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+  user-select: none;
+  text-align: center;
+}
+.comp-mes-label input:checked + .comp-mes-chip{
+  background: var(--brand);
+  color: #fff;
+  border-color: var(--brand);
+  box-shadow: 0 2px 6px rgba(18,56,119,.22);
+}
+.comp-mes-label:hover .comp-mes-chip{
+  background: var(--panel-alt);
+  border-color: var(--line);
+  color: var(--brand);
+}
+.comp-mes-label input:checked + .comp-mes-chip:hover{
+  background: var(--brand-soft);
+  border-color: var(--brand-soft);
+}
+/* Mês sem dados disponíveis */
+.comp-mes-label.sem-dados .comp-mes-chip{
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.comp-mes-label.sem-dados input{ pointer-events: none; }
+
+/* =========================================================
+   SEÇÕES POR ORIGEM NA ÁREA DE COMPARAÇÃO
+   ========================================================= */
+
+.comp-origem-section{
+  margin-bottom: 18px;
+}
+.comp-origem-section:last-of-type{
+  margin-bottom: 0;
+}
+
+.comp-origem-header{
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line);
+}
+.comp-origem-titulo{
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--brand);
+  letter-spacing: -0.01em;
+}
+
+/* Badges de meses no header do painel */
+.comp-result-labels{
+  display: flex;
+  gap: 6px;
+  flex: 1;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.comp-mes-badge{
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 100px;
+  white-space: nowrap;
+  background: var(--panel-alt);
+  color: var(--brand);
+  border: 1px solid var(--line);
+}
+
+/* Cards: a grade agora existe por seção (Jira e Multi) */
+.comp-result-grid{
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+/* Card — mantém o mesmo visual, ajusta apenas a grid */
+.comp-card{
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 14px 16px;
+  animation: compRowIn 0.4s ease-out both;
+}
+.comp-card:nth-child(1){ animation-delay: 0.05s; }
+.comp-card:nth-child(2){ animation-delay: 0.10s; }
+.comp-card:nth-child(3){ animation-delay: 0.15s; }
+.comp-card:nth-child(4){ animation-delay: 0.20s; }
+.comp-card:nth-child(5){ animation-delay: 0.25s; }
+.comp-card:nth-child(6){ animation-delay: 0.30s; }
+
+/* Card do mês: uma coluna com vários valores mensais */
+.comp-card-mes-row{
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 4px;
+  font-size: 12px;
+  border-bottom: 1px dashed var(--line);
+  padding-bottom: 4px;
+}
+.comp-card-mes-row:last-child{ border-bottom: none; margin-bottom: 0; }
+.comp-card-mes-row span{ color: var(--mute); font-size: 11px; }
+.comp-card-mes-row strong{
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--ink);
+}
+
+.comp-chart-section{
+  margin-top: 20px;
+  animation: fadeSlideIn 0.4s ease-out 0.1s both;
+}
+.comp-chart-divider{
+  height: 1px;
+  background: var(--line);
+  margin-bottom: 16px;
+}
+.comp-chart-title{
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--mute);
+  margin: 0 0 14px;
+  font-family: var(--font-body);
+}
+.comp-charts-wrap{
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.comp-chart-block{
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 14px 16px 12px;
+  position: relative; /* ancora o tooltip posicionado */
+  overflow: visible;  /* permite que tooltip saia dos limites */
+  animation: compRowIn 0.4s ease-out both;
+}
+.comp-chart-block-label{
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--mute);
+  margin-bottom: 10px;
+}
+.comp-chart-block canvas{
+  display: block;
+  width: 100%;
+  cursor: crosshair;
+  border-radius: 8px;
+}
+
+/* Legenda inline do gráfico */
+.comp-chart-legend{
+  display: flex;
+  gap: 16px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+.comp-chart-legend-item{
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  color: var(--ink);
+  font-family: var(--font-body);
+}
+.comp-chart-legend-dot{
+  width: 10px; height: 10px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+/* Tooltip do gráfico comparativo — painel estático abaixo do canvas */
+.comp-detail-panel{
+  margin-top: 14px;
+  border-radius: 14px;
+  background: var(--ink);
+  border: 1px solid rgba(255,255,255,.08);
+  padding: 14px 18px;
+  animation: fadeSlideIn 0.22s ease-out;
+}
+.comp-detail-inner{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 28px;
+  align-items: flex-start;
+}
+
+/* Reutiliza as classes de conteúdo do tooltip antigo dentro do painel */
+.comp-tooltip-label{
+  width: 100%;
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: rgba(255,255,255,.55);
+  margin-bottom: 2px;
+}
+.comp-tooltip-row{
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 110px;
+}
+.comp-tooltip-row span{
+  color: rgba(255,255,255,.55);
+  font-size: 11px;
+}
+.comp-tooltip-row strong{
+  font-family: var(--font-mono);
+  font-size: 15px;
+  color: #fff;
+}
+.comp-tooltip-delta{
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 130px;
+  padding-left: 18px;
+  border-left: 1px solid rgba(255,255,255,.12);
+}
+.comp-tooltip-delta span{ color: rgba(255,255,255,.55); font-size: 11px; }
+.comp-tooltip-delta-val{
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 15px;
+}
+.comp-tooltip-up   { color: #4DD9C8; }
+.comp-tooltip-down { color: #F4829A; }
+.comp-tooltip-same { color: rgba(255,255,255,.5); }
+
+/* Indicador de ponto ativo no canvas (halo pulsante via JS) */
+.comp-chart-block canvas.has-active{
+  cursor: crosshair;
+}
+
+@media (max-width: 768px){
+  .comp-charts-wrap{ gap: 14px; }
+  .comp-chart-block{ padding: 12px 12px 10px; }
+  .comp-detail-panel{ padding: 12px 14px; }
+  .comp-detail-inner{ gap: 10px 20px; }
+  .comp-tooltip-row strong,
+  .comp-tooltip-delta-val{ font-size: 13px; }
+}
+
+@media (prefers-reduced-motion: reduce){
+  .comp-chart-section{ animation: none; opacity: 1; }
+  .comp-chart-block{ animation: none; opacity: 1; }
+  .comp-detail-panel{ animation: none; }
+}
+
 /* Seção de comparação na sidebar */
 .comp-periodo-block{
   background: var(--bg);
@@ -666,6 +999,28 @@ h1,h2,h3{ font-family: var(--font-display); margin:0; }
   border: 1px solid rgba(255,196,0,.25);
   border-radius: 8px;
   padding: 8px 10px;
+}
+
+/* Botão de limpar dados importados */
+.btn-limpar{
+  font-family: var(--font-body);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--mute);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 7px 14px;
+  cursor: pointer;
+  margin-top: 4px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  text-align: center;
+}
+.btn-limpar:hover{
+  background: rgba(194,58,93,.08);
+  border-color: var(--rose);
+  color: var(--rose);
 }
 
 /* =========================================================

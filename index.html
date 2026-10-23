@@ -134,67 +134,38 @@
           </div>
 
           <div class="comp-panel" id="compPanel" style="display:none;">
-            <!-- Período A -->
-            <div class="comp-periodo-block">
-              <span class="comp-periodo-label comp-periodo-label--a">Período A</span>
-              <div class="comp-modo-group" role="group" aria-label="Modo do Período A">
-                <label class="periodo-radio comp-radio">
-                  <input type="radio" name="compModoA" value="mes" checked>
-                  <span class="periodo-radio-label">Por mês</span>
-                </label>
-                <label class="periodo-radio comp-radio">
-                  <input type="radio" name="compModoA" value="intervalo">
-                  <span class="periodo-radio-label">Entre datas</span>
-                </label>
-              </div>
-              <div id="compMesAWrap" class="filter-control filter-control--full" style="margin-top:6px;">
+
+            <!-- Seletor de ano -->
+            <div class="comp-ano-wrap">
+              <span class="sidebar-section-label" style="margin-bottom:6px;">Ano</span>
+              <div class="filter-control filter-control--full">
                 <svg class="filter-icon" width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="2"/><path d="M3 9h18M8 2v4M16 2v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-                <select id="compMesA" class="filter-select filter-select--full" aria-label="Mês A para comparação"></select>
-              </div>
-              <div id="compIntervaloAWrap" style="display:none; margin-top:6px;">
-                <div class="filter-control filter-control--full">
-                  <svg class="filter-icon" width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="2"/><path d="M3 9h18M8 2v4M16 2v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-                  <input type="date" id="compInicioA" class="filter-input filter-input--full" aria-label="Data inicial A">
-                </div>
-                <span class="periodo-sep sidebar-sep">até</span>
-                <div class="filter-control filter-control--full">
-                  <svg class="filter-icon" width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="2"/><path d="M3 9h18M8 2v4M16 2v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-                  <input type="date" id="compFimA" class="filter-input filter-input--full" aria-label="Data final A">
-                </div>
+                <select id="compAno" class="filter-select filter-select--full" aria-label="Ano para comparação"></select>
               </div>
             </div>
 
-            <!-- Período B -->
-            <div class="comp-periodo-block">
-              <span class="comp-periodo-label comp-periodo-label--b">Período B</span>
-              <div class="comp-modo-group" role="group" aria-label="Modo do Período B">
-                <label class="periodo-radio comp-radio">
-                  <input type="radio" name="compModoB" value="mes" checked>
-                  <span class="periodo-radio-label">Por mês</span>
-                </label>
-                <label class="periodo-radio comp-radio">
-                  <input type="radio" name="compModoB" value="intervalo">
-                  <span class="periodo-radio-label">Entre datas</span>
-                </label>
+            <!-- Seletor de meses (checkboxes) -->
+            <div class="comp-meses-wrap">
+              <div class="comp-meses-header">
+                <span class="sidebar-section-label">Meses</span>
+                <button type="button" id="btnCompSelecionarTodos" class="comp-sel-todos">Todos</button>
               </div>
-              <div id="compMesBWrap" class="filter-control filter-control--full" style="margin-top:6px;">
-                <svg class="filter-icon" width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="2"/><path d="M3 9h18M8 2v4M16 2v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-                <select id="compMesB" class="filter-select filter-select--full" aria-label="Mês B para comparação"></select>
-              </div>
-              <div id="compIntervaloBWrap" style="display:none;">
-                <div class="filter-control filter-control--full">
-                  <svg class="filter-icon" width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="2"/><path d="M3 9h18M8 2v4M16 2v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-                  <input type="date" id="compInicioB" class="filter-input filter-input--full" aria-label="Data inicial B">
-                </div>
-                <span class="periodo-sep sidebar-sep">até</span>
-                <div class="filter-control filter-control--full">
-                  <svg class="filter-icon" width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="2"/><path d="M3 9h18M8 2v4M16 2v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-                  <input type="date" id="compFimB" class="filter-input filter-input--full" aria-label="Data final B">
-                </div>
+              <div class="comp-meses-grid" id="compMesesGrid" role="group" aria-label="Selecionar meses para comparação">
+                <!-- Gerado via JS -->
               </div>
             </div>
 
-            <button id="btnComparar" class="btn-aplicar btn-aplicar--full" type="button">Comparar períodos</button>
+            <button id="btnComparar" class="btn-aplicar btn-aplicar--full" type="button">Comparar meses</button>
+
+            <!-- Mantidos ocultos para compatibilidade com getDadosComparacao legado -->
+            <div style="display:none;">
+              <select id="compMesA"></select>
+              <select id="compMesB"></select>
+              <input type="date" id="compInicioA"><input type="date" id="compFimA">
+              <input type="date" id="compInicioB"><input type="date" id="compFimB">
+              <input type="radio" name="compModoA" value="mes" checked>
+              <input type="radio" name="compModoB" value="mes" checked>
+            </div>
           </div>
         </div>
 
@@ -208,7 +179,7 @@
           </div>
 
           <div class="import-panel" id="importPanel" style="display:none;">
-            <p class="import-info">Importe arquivos <strong>.xlsx</strong> do Jira ou Multi360 para atualizar o dashboard. Os dados são carregados para a sessão atual.</p>
+            <p class="import-info">Importe arquivos <strong>.xlsx</strong> do Jira ou Multi360. Os dados importados são salvos no navegador (<strong>localStorage</strong>) e persistem entre sessões.</p>
 
             <div class="import-origem-group" role="group" aria-label="Origem do arquivo">
               <label class="periodo-radio comp-radio">
@@ -237,6 +208,7 @@
             </div>
 
             <button id="btnImportar" class="btn-aplicar btn-aplicar--full" type="button" disabled>Importar dados</button>
+            <button id="btnLimparImportados" class="btn-limpar btn-aplicar--full" type="button">Limpar dados importados</button>
             <div id="importStatus" class="import-status" role="status" aria-live="polite"></div>
           </div>
         </div>
@@ -279,18 +251,46 @@
         <div class="comp-result-header">
           <h2 class="comp-result-title">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M9 19V6l-2 2M9 6l2 2M15 5v13l2-2M15 18l-2-2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            Comparação de Períodos
+            Comparação Mensal
           </h2>
-          <div class="comp-result-labels">
-            <span class="comp-badge comp-badge--a" id="compLabelA">Período A</span>
-            <span class="comp-badge comp-badge--b" id="compLabelB">Período B</span>
+          <div class="comp-result-labels" id="compResultLabels">
+            <!-- Badges dos meses selecionados — injetados via JS -->
           </div>
           <button class="comp-close-btn" id="compCloseBtn" type="button" aria-label="Fechar comparação">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
           </button>
         </div>
-        <div class="comp-result-grid" id="compResultGrid">
-          <!-- Preenchido via JS -->
+
+        <!-- Seção Jira -->
+        <div class="comp-origem-section" id="compSecaoJira" style="display:none;">
+          <div class="comp-origem-header">
+            <span class="tick tick-jira" style="margin-right:8px;"></span>
+            <span class="comp-origem-titulo">Jira</span>
+          </div>
+          <div class="comp-result-grid" id="compResultGridJira">
+            <!-- Cards Jira — preenchidos via JS -->
+          </div>
+        </div>
+
+        <!-- Seção Multi -->
+        <div class="comp-origem-section" id="compSecaoMulti" style="display:none;">
+          <div class="comp-origem-header">
+            <span class="tick tick-multi" style="margin-right:8px;"></span>
+            <span class="comp-origem-titulo">Multi360</span>
+          </div>
+          <div class="comp-result-grid" id="compResultGridMulti">
+            <!-- Cards Multi — preenchidos via JS -->
+          </div>
+        </div>
+
+        <!-- Gráfico comparativo -->
+        <div class="comp-chart-section" id="compChartSection" style="display:none;">
+          <div class="comp-chart-divider" aria-hidden="true"></div>
+          <h3 class="comp-chart-title">Visualização comparativa</h3>
+          <div class="comp-charts-wrap" id="compChartsWrap">
+            <!-- Canvas inseridos dinamicamente (um por origem: Jira e Multi) -->
+          </div>
+          <div id="compTooltip" style="display:none;" aria-hidden="true"></div>
         </div>
       </section>
 
