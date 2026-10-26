@@ -1192,6 +1192,9 @@ function getClasseMultiRegistro(m) {
    ESTADO DOS FILTROS DO PAINEL DE COMPARAÇÃO
    ========================================================== */
 
+// Indicador selecionado por bloco (índice da série exibida): 'jira' e 'multi'
+const _compIndicador = { jira: 0, multi: 0 };
+
 // Filtros por bloco: 'jira' e 'multi'
 const _compFiltros = {
   jira: {
@@ -1381,7 +1384,7 @@ const CORES_MESES = [
  * Chamada após o bloco ser inserido no DOM para que os selects possam referenciar o wrap.
  */
 function _renderFiltrosNoBlocoLinhas(block, origem, dadosPorMes, ano, wrap) {
-  const filtrosEl = block.querySelector('.comp-filtros-inline');
+  const filtrosEl = block.querySelector('.comp-filtros-inline:not(.comp-indicador-inline)');
   if (!filtrosEl) return;
 
   const fState    = _compFiltros[origem];
@@ -1428,6 +1431,40 @@ function _renderFiltrosNoBlocoLinhas(block, origem, dadosPorMes, ano, wrap) {
   });
 }
 
+/* -- Helpers do eixo Y com valores reais (dias / horas / quantidades) -- */
+
+/** Gera "ticks" arredondados entre min e max para o eixo Y. */
+function niceTicks(min, max, count) {
+  if (!isFinite(min) || !isFinite(max) || min === max) {
+    min = (min || 0) - 1; max = (max || 1) + 1;
+  }
+  const range = max - min;
+  const step0 = range / count;
+  const mag   = Math.pow(10, Math.floor(Math.log10(step0)));
+  const norm  = step0 / mag;
+  let step;
+  if (norm < 1.5)    step = 1 * mag;
+  else if (norm < 3)  step = 2 * mag;
+  else if (norm < 7)  step = 5 * mag;
+  else                step = 10 * mag;
+  const start = Math.floor(min / step) * step;
+  const end   = Math.ceil(max / step) * step;
+  const ticks = [];
+  for (let v = start; v <= end + step * 1e-6; v += step) {
+    ticks.push(Math.round(v / step) * step); // arredonda para evitar flutuação
+  }
+  return ticks;
+}
+
+/** Formata um valor de tick do eixo Y conforme a unidade do indicador. */
+function formatTickY(value, unidade) {
+  if (unidade === 'count')  return String(Math.round(value));     // quantidades
+  if (unidade === 'nota')   return value.toFixed(1);               // escala 0–10
+  if (unidade === 'dia')    return value === 0 ? '0' : (value / 1440).toFixed(1) + 'd';  // dias
+  if (unidade === 'horas') return value === 0 ? '0' : (value / 60).toFixed(1) + 'h';    // horas
+  return String(Math.round(value));
+}
+
 function renderCompCharts(dadosPorMes, ano) {
   const section = document.getElementById('compChartSection');
   const wrap    = document.getElementById('compChartsWrap');
@@ -1446,7 +1483,7 @@ function renderCompCharts(dadosPorMes, ano) {
         { nome: 'Chamados',   unidade: 'count',   formatFn: null, valores: dadosPorMes.map(d => d.mJira.chamados)   },
         { nome: 'Concluídos', unidade: 'count',   formatFn: null, valores: dadosPorMes.map(d => d.mJira.concluidos) },
         { nome: 'Média SLA',  unidade: 'minutos', formatFn: v => v !== null ? formatMinutesAsDuration(v) : '—', valores: dadosPorMes.map(d => d.mJira.slaMedio) }
-      ], wrap);
+      ], wrap, 'jira');
     if (ctx) graficos.push(ctx);
   }
   if (origemFiltroValue !== 'jira') {
@@ -1456,7 +1493,7 @@ function renderCompCharts(dadosPorMes, ano) {
         { nome: 'Atendimentos', unidade: 'count',   formatFn: null, valores: dadosPorMes.map(d => d.mMulti.atendimentos) },
         { nome: 'Nota Média',   unidade: 'nota',    formatFn: v => v !== null ? v.toFixed(1) : '—', valores: dadosPorMes.map(d => d.mMulti.notaMedia)    },
         { nome: 'Tempo Médio',  unidade: 'minutos', formatFn: v => v !== null ? formatMinutesAsDuration(v) : '—', valores: dadosPorMes.map(d => d.mMulti.tempoMedio) }
-      ], wrap);
+      ], wrap, 'multi');
     if (ctx) graficos.push(ctx);
   }
   if (!graficos.length) {
@@ -1465,7 +1502,16 @@ function renderCompCharts(dadosPorMes, ano) {
   wrap._compGraficos = graficos;
 }
 
-function criarBlocoLinhas(titulo, labels, series, wrap) {
+/** Atualiza a legenda do bloco para exibir somente o indicador selecionado. */
+function atualizarLegendaBloco(ctx) {
+  if (!ctx.legend) return;
+  const serie = ctx.dados.series[ctx.serieIndex];
+  if (!serie) { ctx.legend.innerHTML = ''; return; }
+  const cor = CORES_MESES[ctx.serieIndex % CORES_MESES.length];
+  ctx.legend.innerHTML = `<span class="comp-chart-legend-item"><span class="comp-chart-legend-dot" style="background:${cor};border-radius:50%"></span>${serie.nome}</span>`;
+}
+
+function criarBlocoLinhas(titulo, labels, series, wrap, origem) {
   const block = document.createElement('div');
   block.className = 'comp-chart-block';
 
@@ -1474,8 +1520,25 @@ function criarBlocoLinhas(titulo, labels, series, wrap) {
   tituloEl.textContent = titulo;
   block.appendChild(tituloEl);
 
-  // Filtros inline — Jira ou Multi dependendo do título
-  const origemBloco = titulo.toLowerCase().includes('jira') ? 'jira' : 'multi';
+  // Origem do bloco (passada explicitamente)
+  const origemBloco = origem || (titulo.toLowerCase().includes('jira') ? 'jira' : 'multi');
+
+  // --- Seletor de indicador: somente UMA opção por vez ---
+  const serieIndex = _compIndicador[origemBloco] || 0;
+  const indicadorEl = document.createElement('div');
+  indicadorEl.className = 'comp-filtros-inline comp-indicador-inline';
+  indicadorEl.innerHTML = `
+    <div class="cfi-wrap">
+      <div class="cfi-grupo">
+        <span class="cfi-label">Indicador</span>
+        <select class="cfi-select" data-indicador aria-label="Selecionar indicador da comparação">
+          ${series.map((s, i) => `<option value="${i}" ${i === serieIndex ? 'selected' : ''}>${s.nome}</option>`).join('')}
+        </select>
+      </div>
+    </div>`;
+  block.appendChild(indicadorEl);
+
+  // --- Filtros inline (Classificação, Categoria, SLA) ---
   const filtrosEl = document.createElement('div');
   filtrosEl.className = 'comp-filtros-inline';
   // Populado após o block ser adicionado ao wrap (necessita de dados)
@@ -1487,10 +1550,6 @@ function criarBlocoLinhas(titulo, labels, series, wrap) {
 
   const legend = document.createElement('div');
   legend.className = 'comp-chart-legend';
-  series.forEach((s, i) => {
-    const cor = CORES_MESES[i % CORES_MESES.length];
-    legend.innerHTML += `<span class="comp-chart-legend-item"><span class="comp-chart-legend-dot" style="background:${cor};border-radius:50%"></span>${s.nome}</span>`;
-  });
   block.appendChild(legend);
 
   const painelDetalhe = document.createElement('div');
@@ -1507,8 +1566,24 @@ function criarBlocoLinhas(titulo, labels, series, wrap) {
   const anoParaFiltros   = wrap._ano || 0;
   _renderFiltrosNoBlocoLinhas(block, origemBloco, dadosParaFiltros, anoParaFiltros, wrap);
 
-  const ctx = { canvas, block, painelDetalhe, painelInner, dados: { titulo, labels, series }, hitZones: [], pontoAtivo: null };
+  const ctx = {
+    canvas, block, painelDetalhe, painelInner, legend, origem: origemBloco,
+    dados: { titulo, labels, series }, serieIndex, hitZones: [], pontoAtivo: null
+  };
+  block._compCtx = ctx;
+
+  atualizarLegendaBloco(ctx);
   desenharLinhasComparativas(ctx);
+
+  // Troca de indicador → redesenha somente este bloco (sem reexecutar a comparação)
+  const seletor = indicadorEl.querySelector('[data-indicador]');
+  seletor.addEventListener('change', () => {
+    ctx.serieIndex = parseInt(seletor.value, 10) || 0;
+    _compIndicador[origemBloco] = ctx.serieIndex;
+    atualizarLegendaBloco(ctx);
+    desenharLinhasComparativas(ctx);
+  });
+
   canvas.addEventListener('mousemove',  e => tratarHoverComp(e, ctx));
   canvas.addEventListener('mouseleave', ()  => limparHoverComp(ctx));
   canvas.addEventListener('touchstart', e  => { e.preventDefault(); tratarHoverComp(e.touches[0], ctx); }, { passive: false });
@@ -1519,8 +1594,10 @@ function criarBlocoLinhas(titulo, labels, series, wrap) {
 /* -- Renderização do canvas de linhas -- */
 
 function desenharLinhasComparativas(ctx) {
-  const { canvas, block, dados } = ctx;
-  const { labels, series }       = dados;
+  const { canvas, block, dados, serieIndex } = ctx;
+  const { labels } = dados;
+  const serie = dados.series[serieIndex];
+  if (!serie) return;
 
   const dpr    = window.devicePixelRatio || 1;
   const ps     = getComputedStyle(block);
@@ -1539,7 +1616,7 @@ function desenharLinhasComparativas(ctx) {
   c.setTransform(dpr, 0, 0, dpr, 0, 0);
   c.clearRect(0, 0, cssW, cssH);
 
-  if (!n || !series.length) {
+  if (!n) {
     c.fillStyle = COLORS.mute; c.font = `12px ${FONT}`;
     c.textAlign = 'center'; c.textBaseline = 'middle';
     c.fillText('Sem dados para o período', cssW / 2, cssH / 2);
@@ -1547,61 +1624,81 @@ function desenharLinhasComparativas(ctx) {
   }
 
   // Padding — garante que pontos e rótulos das extremidades não sejam cortados.
-  const padL      = mobile ? 42  : 50;   // eixo Y
+  const padL      = mobile ? 48  : 56;   // eixo Y (valores reais)
   const padTop    = mobile ? 28  : 34;   // rótulo de valor acima do ponto mais alto
   const padBottom = mobile ? 48  : 56;   // rótulos dos meses no eixo X
   const padR      = mobile ? 20  : 24;
   const chartW    = cssW - padL - padR;
   const chartH    = cssH - padTop - padBottom;
 
-  // Distribui n pontos deixando meia "slot" de cada lado,
-  // evitando que o 1º e o último ponto fiquem na borda exata.
+  // Distribui n pontos deixando meia "slot" de cada lado.
   const slotW  = chartW / Math.max(n + 1, 2);
   const startX = padL + slotW;
   const stepX  = n > 1 ? (chartW - 2 * slotW) / (n - 1) : 0;
-
   function xPos(i) { return n > 1 ? startX + i * stepX : padL + chartW / 2; }
 
-  // Normalização global por série: [min, max] dos valores da série → [0..1].
-  const innerMarg = 0.10;
-  function normalizarSerie(serie) {
-    const vals = serie.valores.filter(v => v !== null);
-    if (!vals.length) return serie.valores.map(() => null);
-    const lo = Math.min(...vals), hi = Math.max(...vals);
-    return serie.valores.map(v => {
-      if (v === null) return null;
-      const norm    = hi === lo ? 0.5 : (v - lo) / (hi - lo);
-      return innerMarg + norm * (1 - 2 * innerMarg);
-    });
+  // --- Domínio do eixo Y com valores REAIS do indicador selecionado ---
+  const vals = serie.valores.filter(v => v !== null);
+  let yMin, yMax;
+  if (vals.length) {
+    yMin = Math.min(...vals);
+    yMax = Math.max(...vals);
+  } else {
+    yMin = 0; yMax = 1;
   }
-  function yPos(norm) { return padTop + chartH - norm * chartH; }
 
-  const todasAsSeries = series.map((s, si) => {
-    const normas = normalizarSerie(s);
-    const pontos = labels.map((lbl, i) => {
-      const norm = normas[i];
-      return norm !== null ? { x: xPos(i), y: yPos(norm), label: lbl, val: s.valores[i], si, i } : null;
-    });
-    return { ...s, pontos, cor: CORES_MESES[si % CORES_MESES.length] };
-  });
+  // Unidade do eixo Y (define a formatação da lateral esquerda):
+  //   'count'  → quantidades
+  //   'nota'   → escala 0–10
+  //   'minutos'→ 'dia' quando o valor é alto, 'horas' caso contrário
+  let unidadeAxis = serie.unidade;
+  if (unidadeAxis === 'minutos') {
+    unidadeAxis = yMax >= 1440 ? 'dia' : 'horas';
+  }
+
+  // Ajusta o domínio conforme a unidade
+  if (serie.unidade === 'count') {
+    yMin = 0;                                  // quantidades começam em zero
+    if (yMax < 1) yMax = 1;
+  } else if (serie.unidade === 'nota') {
+    yMin = Math.max(0, yMin - 0.5);
+    yMax = Math.min(10, yMax + 0.5);
+  } else if (vals.length) {
+    const span = (yMax - yMin) || 1;
+    yMin = Math.max(0, yMin - span * 0.08);
+    yMax = yMax + span * 0.08;
+  }
+
+  let ticks = niceTicks(yMin, yMax, mobile ? 4 : 5);
+  if (serie.unidade === 'count') {
+    // quantidades → rótulos inteiros (sem duplicatas)
+    ticks = [...new Set(ticks.map(t => Math.round(t)))];
+    if (ticks.length < 2) ticks = [0, Math.max(1, Math.round(yMax))];
+  } else if (serie.unidade === 'nota') {
+    ticks = ticks.filter(t => t >= -0.001 && t <= 10.001);
+    if (ticks.length < 2) ticks = niceTicks(0, 10, mobile ? 4 : 5);
+  }
+  const lo = ticks[0], hi = ticks[ticks.length - 1];
+  function yPos(v) {
+    if (hi === lo) return padTop + chartH / 2;
+    return padTop + chartH - ((v - lo) / (hi - lo)) * chartH;
+  }
 
   // Grade horizontal
-  const nGrid = mobile ? 3 : 4;
   c.strokeStyle = COLORS.grid; c.lineWidth = 1; c.setLineDash([3, 5]);
   c.beginPath();
-  for (let g = 0; g <= nGrid; g++) {
-    const gy = padTop + (g / nGrid) * chartH;
+  ticks.forEach(t => {
+    const gy = yPos(t);
     c.moveTo(padL, gy); c.lineTo(padL + chartW, gy);
-  }
+  });
   c.stroke(); c.setLineDash([]);
 
-  // Eixo Y
+  // Eixo Y (lateral esquerda) — valores reais com a unidade do indicador
   c.fillStyle = COLORS.mute; c.font = `${mobile ? 9 : 10}px ${FONT}`;
   c.textAlign = 'right'; c.textBaseline = 'middle';
-  for (let g = 0; g <= nGrid; g++) {
-    const gy  = padTop + (g / nGrid) * chartH;
-    c.fillText(`${100 - g * (100 / nGrid)}%`, padL - 5, gy);
-  }
+  ticks.forEach(t => {
+    c.fillText(formatTickY(t, unidadeAxis), padL - 5, yPos(t));
+  });
 
   // Linhas verticais guia
   c.strokeStyle = 'rgba(18,56,119,.05)'; c.lineWidth = 1;
@@ -1609,13 +1706,17 @@ function desenharLinhasComparativas(ctx) {
   labels.forEach((_, i) => { c.moveTo(xPos(i), padTop); c.lineTo(xPos(i), padTop + chartH); });
   c.stroke();
 
-  // Séries
+  // --- Único indicador selecionado ---
   ctx.hitZones = [];
-  todasAsSeries.forEach(serie => {
-    const { pontos, cor } = serie;
-    const validos = pontos.filter(Boolean);
-    if (!validos.length) return;
+  const cor = CORES_MESES[serieIndex % CORES_MESES.length];
+  const activeSerie = { ...serie, cor };
+  const pontos = labels.map((lbl, i) => {
+    const v = serie.valores[i];
+    return v !== null ? { x: xPos(i), y: yPos(v), label: lbl, val: v, si: serieIndex, i } : null;
+  });
+  const validos = pontos.filter(Boolean);
 
+  if (validos.length) {
     // Área
     if (validos.length >= 2) {
       c.beginPath();
@@ -1645,8 +1746,8 @@ function desenharLinhasComparativas(ctx) {
     c.shadowColor = 'transparent'; c.shadowBlur = 0; c.shadowOffsetY = 0;
 
     // Pontos + rótulos
+    const fmt = serie.formatFn || (v => v !== null ? String(v) : '—');
     validos.forEach(p => {
-      const fmt = serie.formatFn || (v => v !== null ? String(v) : '—');
       c.beginPath(); c.arc(p.x, p.y, mobile ? 7 : 9, 0, Math.PI * 2);
       c.fillStyle = cor + '20'; c.fill();
       c.beginPath(); c.arc(p.x, p.y, mobile ? 3.5 : 4.5, 0, Math.PI * 2);
@@ -1655,11 +1756,11 @@ function desenharLinhasComparativas(ctx) {
       c.fillStyle = cor; c.font = `600 ${mobile ? 8.5 : 9.5}px ${FONT}`;
       c.textAlign = 'center'; c.textBaseline = 'bottom';
       c.fillText(fmt(p.val), p.x, p.y - (mobile ? 12 : 15));
-      ctx.hitZones.push({ px: p.x, py: p.y, r: mobile ? 16 : 20, label: p.label, val: p.val, serie });
+      ctx.hitZones.push({ px: p.x, py: p.y, r: mobile ? 16 : 20, label: p.label, val: p.val, serie: activeSerie });
     });
-  });
+  }
 
-  // Rótulos eixo X
+  // Rótulos eixo X (meses)
   const yLbl   = padTop + chartH + 7;
   const maxWlbl = Math.max(28, stepX > 0 ? stepX - 4 : slotW * 2 - 4);
   c.textBaseline = 'top'; c.textAlign = 'center';

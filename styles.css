@@ -358,10 +358,12 @@ h1,h2,h3{ font-family: var(--font-display); margin:0; }
   background: rgba(27,42,74,0.45);
   z-index: 25;   /* entre a topbar (20) e o drawer (30) */
   opacity: 0;
+  pointer-events: none;   /* não bloqueia cliques quando invisível (mobile) */
   transition: opacity 0.28s ease;
 }
 .sidebar-overlay.is-visible{
   opacity: 1;
+  pointer-events: auto;
 }
 
 /* =========================================================
@@ -892,6 +894,14 @@ h1,h2,h3{ font-family: var(--font-display); margin:0; }
   border: 1px solid var(--line);
   border-radius: 12px;
   animation: fadeSlideIn 0.2s ease-out;
+}
+
+/* Barra seletora do indicador (um por vez) — reaproveita o estilo dos filtros inline */
+.comp-indicador-inline{
+  margin: 0 0 4px;
+}
+.comp-indicador-inline + .comp-filtros-inline{
+  margin-top: 6px;
 }
 .cfi-wrap{
   display: flex;
