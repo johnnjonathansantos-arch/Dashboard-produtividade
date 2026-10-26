@@ -1150,6 +1150,101 @@ function getDadosMes(ano, mes) {
   };
 }
 
+/* ==========================================================
+   MAPA DE CLASSIFICAÇÃO JIRA → MULTI
+   Usa o campo cliente do Jira (extraído do título) e o
+   prefixo do campo nome do Multi para relacioná-los.
+   Normalização: lowercase + só alfanuméricos.
+   ========================================================== */
+
+function _normNome(s) {
+  if (!s) return '';
+  return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
+}
+
+let _mapaClasseJira = null;
+
+function getMapaClasseJira() {
+  if (_mapaClasseJira) return _mapaClasseJira;
+  const contagem = {}; // normNome → { A:0, B:0, C:0 }
+  getAllJira().forEach(r => {
+    if (!r.cliente || !r.classe) return;
+    const n = _normNome(r.cliente);
+    if (!contagem[n]) contagem[n] = { A: 0, B: 0, C: 0 };
+    contagem[n][r.classe] = (contagem[n][r.classe] || 0) + 1;
+  });
+  _mapaClasseJira = new Map();
+  Object.entries(contagem).forEach(([n, cnt]) => {
+    const melhor = ['A','B','C'].reduce((acc, cls) => cnt[cls] > cnt[acc] ? cls : acc);
+    _mapaClasseJira.set(n, melhor);
+  });
+  return _mapaClasseJira;
+}
+
+function invalidarMapaClasseJira() { _mapaClasseJira = null; }
+
+function getClasseMultiRegistro(m) {
+  const cliente = extrairClienteMulti(m.nome);
+  return getMapaClasseJira().get(_normNome(cliente)) || null;
+}
+
+/* ==========================================================
+   ESTADO DOS FILTROS DO PAINEL DE COMPARAÇÃO
+   ========================================================== */
+
+// Filtros por bloco: 'jira' e 'multi'
+const _compFiltros = {
+  jira: {
+    classe:    'all',   // 'all' | 'A' | 'B' | 'C' | 'sem'
+    categoria: 'all',   // 'all' | <tipo>
+    sla:       'todos', // 'todos' | 'com-sla' | 'sem-sla'
+  },
+  multi: {
+    classe:    'all',
+    categoria: 'all',   // 'all' | <motivo>
+    sla:       'todos', // 'todos' | 'com-sla' | 'sem-sla' (multi usa tempo de atendimento como proxy)
+  }
+};
+
+/** Aplica filtros de comparação sobre arrays de um mês. */
+function aplicarFiltrosComp(jira, multi) {
+  const fj = _compFiltros.jira;
+  const fm = _compFiltros.multi;
+
+  let j = jira;
+  let m = multi.map(r => ({ ...r, _classe: getClasseMultiRegistro(r) }));
+
+  // Jira: filtro de classe
+  if (fj.classe !== 'all') {
+    j = j.filter(r => fj.classe === 'sem' ? !r.classe : r.classe === fj.classe);
+  }
+  // Jira: filtro de categoria (tipo)
+  if (fj.categoria !== 'all') {
+    j = j.filter(r => r.tipo === fj.categoria);
+  }
+  // Jira: filtro de SLA
+  if (fj.sla === 'com-sla')  j = j.filter(r => typeof r.sla === 'number' && r.sla >= 0);
+  if (fj.sla === 'sem-sla')  j = j.filter(r => r.sla === null);
+
+  // Multi: filtro de classe (via mapa Jira)
+  if (fm.classe !== 'all') {
+    m = m.filter(r => fm.classe === 'sem' ? !r._classe : r._classe === fm.classe);
+  }
+  // Multi: filtro de categoria (motivo)
+  if (fm.categoria !== 'all') {
+    m = m.filter(r => r.motivo === fm.categoria);
+  }
+  // Multi: SLA proxy — filtra por presença de tempo de atendimento válido
+  if (fm.sla === 'com-sla') {
+    m = m.filter(r => calcTempoAtendimentoMin(r.data, r.dataFinalizacao) !== null);
+  }
+  if (fm.sla === 'sem-sla') {
+    m = m.filter(r => calcTempoAtendimentoMin(r.data, r.dataFinalizacao) === null);
+  }
+
+  return { jira: j, multi: m };
+}
+
 function calcMetricasJira(jira) {
   const sla = jira.filter(t => typeof t.sla === 'number' && t.sla >= 0);
   return {
@@ -1187,11 +1282,12 @@ function executarComparacao() {
       .join('');
   }
 
-  // Dados por mês
+  // Dados por mês (com filtros de comparação aplicados)
   const dadosPorMes = meses.map(mo => {
     const { jira, multi } = getDadosMes(ano, mo);
-    const j = origemFiltroValue === 'multi' ? [] : jira;
-    const m = origemFiltroValue === 'jira'  ? [] : multi;
+    const j0 = origemFiltroValue === 'multi' ? [] : jira;
+    const m0 = origemFiltroValue === 'jira'  ? [] : multi;
+    const { jira: j, multi: m } = aplicarFiltrosComp(j0, m0);
     return { mes: mo, label: MESES_NOME_CURTO[mo - 1], jira: j, multi: m, mJira: calcMetricasJira(j), mMulti: calcMetricasMulti(m) };
   });
 
@@ -1237,11 +1333,36 @@ function criarCompCardMultiMes(labelTitulo, entradas, formatFn, gridEl, delay) {
   const card = document.createElement('div');
   card.className = 'comp-card';
   card.style.animationDelay = `${delay}s`;
+
   let linhas = '';
-  entradas.forEach(e => {
+  entradas.forEach((e, idx) => {
     const fVal = formatFn ? formatFn(e.val) : (e.val !== null ? String(e.val) : '—');
-    linhas += `<div class="comp-card-mes-row"><span>${e.label}</span><strong>${fVal}</strong></div>`;
+
+    // Variação percentual em relação ao mês anterior
+    let pctHTML = '';
+    if (idx > 0) {
+      const prev = entradas[idx - 1].val;
+      if (e.val !== null && prev !== null) {
+        if (prev === 0 && e.val !== 0) {
+          pctHTML = `<span class="comp-card-pct comp-delta-up">↑ novo</span>`;
+        } else if (prev !== 0) {
+          const pct = ((e.val - prev) / prev) * 100;
+          const sign = pct > 0 ? '↑' : pct < 0 ? '↓' : '=';
+          const cls  = pct > 0 ? 'comp-delta-up' : pct < 0 ? 'comp-delta-down' : 'comp-delta-neutral';
+          pctHTML = `<span class="comp-card-pct ${cls}">${sign} ${Math.abs(pct).toFixed(1)}%</span>`;
+        }
+      }
+    }
+
+    linhas += `
+      <div class="comp-card-mes-row">
+        <span>${e.label}</span>
+        <span class="comp-card-mes-val-wrap">
+          <strong>${fVal}</strong>${pctHTML}
+        </span>
+      </div>`;
   });
+
   card.innerHTML = `<div class="comp-card-label">${labelTitulo}</div>${linhas}`;
   gridEl.appendChild(card);
 }
@@ -1255,12 +1376,67 @@ const CORES_MESES = [
   '#4DD9C8','#F4829A','#5C7EC0','#1B6E66','#D4870A','#8C2042'
 ];
 
+/**
+ * Popula o div.comp-filtros-inline já criado dentro de um bloco de gráfico.
+ * Chamada após o bloco ser inserido no DOM para que os selects possam referenciar o wrap.
+ */
+function _renderFiltrosNoBlocoLinhas(block, origem, dadosPorMes, ano, wrap) {
+  const filtrosEl = block.querySelector('.comp-filtros-inline');
+  if (!filtrosEl) return;
+
+  const fState    = _compFiltros[origem];
+  const categorias = origem === 'jira'
+    ? [...new Set(dadosPorMes.flatMap(d => d.jira.map(r => r.tipo)).filter(Boolean))].sort()
+    : [...new Set(dadosPorMes.flatMap(d => d.multi.map(r => r.motivo)).filter(Boolean))].sort();
+
+  const labelSla = origem === 'jira' ? 'SLA Jira' : 'Tempo Multi';
+
+  filtrosEl.innerHTML = `
+    <div class="cfi-wrap">
+      <div class="cfi-grupo">
+        <span class="cfi-label">Classificação</span>
+        <select class="cfi-select" data-campo="classe" aria-label="Filtrar por classificação">
+          <option value="all">Todas</option>
+          <option value="A" ${fState.classe==='A'?'selected':''}>Classe A</option>
+          <option value="B" ${fState.classe==='B'?'selected':''}>Classe B</option>
+          <option value="C" ${fState.classe==='C'?'selected':''}>Classe C</option>
+          <option value="sem" ${fState.classe==='sem'?'selected':''}>Sem class.</option>
+        </select>
+      </div>
+      <div class="cfi-grupo">
+        <span class="cfi-label">Categoria</span>
+        <select class="cfi-select" data-campo="categoria" aria-label="Filtrar por categoria">
+          <option value="all">Todas</option>
+          ${categorias.map(c => `<option value="${c}" ${fState.categoria===c?'selected':''}>${c}</option>`).join('')}
+        </select>
+      </div>
+      <div class="cfi-grupo">
+        <span class="cfi-label">${labelSla}</span>
+        <select class="cfi-select" data-campo="sla" aria-label="Filtrar por SLA">
+          <option value="todos" ${fState.sla==='todos'?'selected':''}>Todos</option>
+          <option value="com-sla" ${fState.sla==='com-sla'?'selected':''}>Com SLA</option>
+          <option value="sem-sla" ${fState.sla==='sem-sla'?'selected':''}>Sem SLA</option>
+        </select>
+      </div>
+    </div>`;
+
+  filtrosEl.querySelectorAll('.cfi-select').forEach(sel => {
+    sel.addEventListener('change', () => {
+      _compFiltros[origem][sel.dataset.campo] = sel.value;
+      executarComparacao();
+    });
+  });
+}
+
 function renderCompCharts(dadosPorMes, ano) {
   const section = document.getElementById('compChartSection');
   const wrap    = document.getElementById('compChartsWrap');
   if (!section || !wrap) return;
   wrap.innerHTML = '';
   section.style.display = 'block';
+  // Guarda dados no wrap para que criarBlocoLinhas possa acessar ao renderizar filtros
+  wrap._dadosPorMes = dadosPorMes;
+  wrap._ano         = ano;
   const graficos = [];
 
   if (origemFiltroValue !== 'multi') {
@@ -1298,6 +1474,14 @@ function criarBlocoLinhas(titulo, labels, series, wrap) {
   tituloEl.textContent = titulo;
   block.appendChild(tituloEl);
 
+  // Filtros inline — Jira ou Multi dependendo do título
+  const origemBloco = titulo.toLowerCase().includes('jira') ? 'jira' : 'multi';
+  const filtrosEl = document.createElement('div');
+  filtrosEl.className = 'comp-filtros-inline';
+  // Populado após o block ser adicionado ao wrap (necessita de dados)
+  block._origemBloco = origemBloco;
+  block.appendChild(filtrosEl);
+
   const canvas = document.createElement('canvas');
   block.appendChild(canvas);
 
@@ -1317,6 +1501,11 @@ function criarBlocoLinhas(titulo, labels, series, wrap) {
   painelDetalhe.appendChild(painelInner);
   block.appendChild(painelDetalhe);
   wrap.appendChild(block);
+
+  // Popula os filtros inline agora que o bloco está no DOM
+  const dadosParaFiltros = wrap._dadosPorMes || [];
+  const anoParaFiltros   = wrap._ano || 0;
+  _renderFiltrosNoBlocoLinhas(block, origemBloco, dadosParaFiltros, anoParaFiltros, wrap);
 
   const ctx = { canvas, block, painelDetalhe, painelInner, dados: { titulo, labels, series }, hitZones: [], pontoAtivo: null };
   desenharLinhasComparativas(ctx);
@@ -1620,8 +1809,10 @@ function ajustarAlturaTopbar() {
   appLayout.style.paddingTop = h + 'px';
   // Só ajusta top e height da sidebar em desktop (sticky)
   if (sidebarEl && window.innerWidth > 900) {
-    sidebarEl.style.top    = h + 'px';
-    sidebarEl.style.height = `calc(100vh - ${h}px)`;
+    const altSidebar     = `calc(100vh - ${h}px)`;
+    sidebarEl.style.top       = h + 'px';
+    sidebarEl.style.height    = altSidebar;
+    sidebarEl.style.maxHeight = altSidebar;
   }
 }
 

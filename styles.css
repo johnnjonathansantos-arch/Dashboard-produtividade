@@ -193,11 +193,12 @@ h1,h2,h3{ font-family: var(--font-display); margin:0; }
    BARRA LATERAL (SIDEBAR)
    ========================================================= */
 .sidebar{
-  /* sticky dentro do flex row — requer align-self: flex-start */
+  /* sticky dentro do flex row — height fixa igual à viewport menos a topbar */
   position: sticky;
   top: 64px;            /* valor inicial — JS ajusta para a altura real da topbar */
   align-self: flex-start;
   height: calc(100vh - 64px); /* JS sobrescreve após medir a topbar */
+  max-height: calc(100vh - 64px);
   width: var(--sidebar-w);
   min-width: var(--sidebar-w);
   background: var(--panel);
@@ -881,6 +882,100 @@ h1,h2,h3{ font-family: var(--font-display); margin:0; }
   cursor: crosshair;
 }
 
+/* =========================================================
+   FILTROS INLINE NOS BLOCOS DE COMPARAÇÃO
+   ========================================================= */
+.comp-filtros-inline{
+  margin: 10px 0 14px;
+  padding: 10px 14px;
+  background: var(--panel-alt);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  animation: fadeSlideIn 0.2s ease-out;
+}
+.cfi-wrap{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  align-items: flex-end;
+}
+.cfi-grupo{
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 110px;
+}
+.cfi-label{
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--mute);
+}
+.cfi-select{
+  appearance: none;
+  -webkit-appearance: none;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  color: var(--brand);
+  font-family: var(--font-body);
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 6px 24px 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%23123877' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  transition: border-color 0.18s ease;
+  width: 100%;
+}
+.cfi-select:focus{
+  outline: none;
+  border-color: var(--brand-soft);
+  box-shadow: 0 0 0 3px rgba(47,90,168,.12);
+}
+
+/* =========================================================
+   CARDS DE COMPARAÇÃO — linha de valor + percentual
+   ========================================================= */
+.comp-card-mes-row{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 0;
+  border-bottom: 1px dashed var(--line);
+  font-size: 12.5px;
+  gap: 8px;
+}
+.comp-card-mes-row:last-child{ border-bottom: none; }
+.comp-card-mes-row > span:first-child{ color: var(--mute); flex-shrink: 0; }
+
+.comp-card-mes-val-wrap{
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.comp-card-mes-val-wrap strong{
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+  color: var(--ink);
+}
+.comp-card-pct{
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+.comp-card-pct.comp-delta-up  { background: rgba(14,143,130,.10); color: var(--teal); }
+.comp-card-pct.comp-delta-down{ background: rgba(194,58,93,.10);  color: var(--rose); }
+.comp-card-pct.comp-delta-neutral{ background: rgba(100,112,140,.10); color: var(--mute); }
+
 @media (max-width: 768px){
   .comp-charts-wrap{ gap: 14px; }
   .comp-chart-block{ padding: 12px 12px 10px; }
@@ -888,12 +983,15 @@ h1,h2,h3{ font-family: var(--font-display); margin:0; }
   .comp-detail-inner{ gap: 10px 20px; }
   .comp-tooltip-row strong,
   .comp-tooltip-delta-val{ font-size: 13px; }
+  .cfi-wrap{ gap: 8px 12px; }
+  .cfi-grupo{ min-width: 90px; }
 }
 
 @media (prefers-reduced-motion: reduce){
   .comp-chart-section{ animation: none; opacity: 1; }
   .comp-chart-block{ animation: none; opacity: 1; }
   .comp-detail-panel{ animation: none; }
+  .comp-filtros-inline{ animation: none; }
 }
 
 /* Seção de comparação na sidebar */

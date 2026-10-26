@@ -770,6 +770,7 @@ btnImportar.addEventListener('click', async () => {
       // Para Jira, como a chave é o ticket, não há substituição — só adição.
       _importedJira.push(...unicos);
       salvarDadosImportados(); // persiste no localStorage
+      invalidarMapaClasseJira(); // recalcula mapa de classificação Jira→Multi
       mensagemFinal = `✓ ${totalImportados} chamado${totalImportados !== 1 ? 's' : ''} Jira importado${totalImportados !== 1 ? 's' : ''}` +
         (dup > 0 ? ` · ${dup} duplicata${dup !== 1 ? 's' : ''} ignorada${dup !== 1 ? 's' : ''}` : '') +
         (mesDetectado ? ` · Mês: ${labelMes(mesDetectado)}` : '') +
