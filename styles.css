@@ -504,12 +504,6 @@ h1,h2,h3{ font-family: var(--font-display); margin:0; }
 }
 .comp-close-btn:hover{ background: var(--rose); color: #fff; border-color: var(--rose); }
 
-.comp-result-grid{
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 14px;
-}
-
 .comp-card{
   background: var(--bg);
   border: 1px solid var(--line);
@@ -676,6 +670,29 @@ h1,h2,h3{ font-family: var(--font-display); margin:0; }
   margin-bottom: 0;
 }
 
+/* Layout: cards à esquerda, gráfico de barras à direita */
+.comp-origem-inner{
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr);
+  gap: 16px;
+  align-items: start;
+}
+.comp-origem-cards{
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.comp-origem-grafico{
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 14px 16px 12px;
+  position: relative;
+  overflow: visible;
+  isolation: isolate;
+  animation: compRowIn 0.4s ease-out both;
+}
+
 .comp-origem-header{
   display: flex;
   align-items: center;
@@ -780,8 +797,9 @@ h1,h2,h3{ font-family: var(--font-display); margin:0; }
   border: 1px solid var(--line);
   border-radius: 16px;
   padding: 14px 16px 12px;
-  position: relative; /* ancora o tooltip posicionado */
-  overflow: visible;  /* permite que tooltip saia dos limites */
+  position: relative;
+  overflow: visible;
+  isolation: isolate; /* cria novo stacking context sem overflow:hidden */
   animation: compRowIn 0.4s ease-out both;
 }
 .comp-chart-block-label{
@@ -885,6 +903,52 @@ h1,h2,h3{ font-family: var(--font-display); margin:0; }
 }
 
 /* =========================================================
+   TOOLTIP FLUTUANTE DOS GRÁFICOS
+   ========================================================= */
+.chart-tooltip-float{
+  position: fixed;
+  z-index: 9999;
+  pointer-events: none;
+  background: var(--ink);
+  color: #fff;
+  border-radius: 10px;
+  padding: 9px 13px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  line-height: 1.5;
+  box-shadow: 0 6px 24px rgba(0,0,0,.28);
+  border: 1px solid rgba(255,255,255,.08);
+  max-width: 230px;
+  animation: fadeSlideIn 0.15s ease-out;
+  white-space: nowrap;
+}
+.chart-tooltip-float .tt-label{
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: rgba(255,255,255,.55);
+  margin-bottom: 3px;
+}
+.chart-tooltip-float .tt-value{
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+}
+.chart-tooltip-float .tt-delta{
+  font-size: 11px;
+  color: rgba(255,255,255,.7);
+  margin-top: 3px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.tt-delta-up   { color: #4DD9C8; }
+.tt-delta-down { color: #F4829A; }
+.tt-delta-same { color: rgba(255,255,255,.5); }
+
+/* =========================================================
    FILTROS INLINE NOS BLOCOS DE COMPARAÇÃO
    ========================================================= */
 .comp-filtros-inline{
@@ -894,6 +958,9 @@ h1,h2,h3{ font-family: var(--font-display); margin:0; }
   border: 1px solid var(--line);
   border-radius: 12px;
   animation: fadeSlideIn 0.2s ease-out;
+  position: relative;
+  z-index: 5;
+  overflow: visible;
 }
 
 /* Barra seletora do indicador (um por vez) — reaproveita o estilo dos filtros inline */
@@ -940,6 +1007,8 @@ h1,h2,h3{ font-family: var(--font-display); margin:0; }
   background-position: right 8px center;
   transition: border-color 0.18s ease;
   width: 100%;
+  position: relative;
+  z-index: 10;
 }
 .cfi-select:focus{
   outline: none;
@@ -995,6 +1064,7 @@ h1,h2,h3{ font-family: var(--font-display); margin:0; }
   .comp-tooltip-delta-val{ font-size: 13px; }
   .cfi-wrap{ gap: 8px 12px; }
   .cfi-grupo{ min-width: 90px; }
+  .comp-origem-inner{ grid-template-columns: 1fr; }
 }
 
 @media (prefers-reduced-motion: reduce){

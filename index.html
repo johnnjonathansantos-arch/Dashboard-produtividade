@@ -267,8 +267,15 @@
             <span class="tick tick-jira" style="margin-right:8px;"></span>
             <span class="comp-origem-titulo">Jira</span>
           </div>
-          <div class="comp-result-grid" id="compResultGridJira">
-            <!-- Cards Jira — preenchidos via JS -->
+          <div class="comp-origem-inner">
+            <div class="comp-origem-cards">
+              <div class="comp-result-grid" id="compResultGridJira">
+                <!-- Cards Jira — preenchidos via JS -->
+              </div>
+            </div>
+            <div class="comp-origem-grafico" id="compBlocoJira">
+              <!-- Gráfico de barras Jira — preenchido via JS -->
+            </div>
           </div>
         </div>
 
@@ -278,18 +285,21 @@
             <span class="tick tick-multi" style="margin-right:8px;"></span>
             <span class="comp-origem-titulo">Multi360</span>
           </div>
-          <div class="comp-result-grid" id="compResultGridMulti">
-            <!-- Cards Multi — preenchidos via JS -->
+          <div class="comp-origem-inner">
+            <div class="comp-origem-cards">
+              <div class="comp-result-grid" id="compResultGridMulti">
+                <!-- Cards Multi — preenchidos via JS -->
+              </div>
+            </div>
+            <div class="comp-origem-grafico" id="compBlocoMulti">
+              <!-- Gráfico de barras Multi — preenchido via JS -->
+            </div>
           </div>
         </div>
 
-        <!-- Gráfico comparativo -->
-        <div class="comp-chart-section" id="compChartSection" style="display:none;">
-          <div class="comp-chart-divider" aria-hidden="true"></div>
-          <h3 class="comp-chart-title">Visualização comparativa</h3>
-          <div class="comp-charts-wrap" id="compChartsWrap">
-            <!-- Canvas inseridos dinamicamente (um por origem: Jira e Multi) -->
-          </div>
+        <!-- Área de canvas legada (mantida vazia para compatibilidade) -->
+        <div id="compChartSection" style="display:none;">
+          <div id="compChartsWrap"></div>
           <div id="compTooltip" style="display:none;" aria-hidden="true"></div>
         </div>
       </section>
