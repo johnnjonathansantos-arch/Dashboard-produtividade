@@ -513,6 +513,16 @@ function renderDashboard(jira, multi) {
   animateValueUpdate('statTempoMedio', formatMinutesAsDuration(tempoMedioMultiMin));
   animateValueUpdate('statNotaMin', multiComNota.length ? Math.min(...multiComNota.map(m => m.avaliacao)).toFixed(0) : '—');
 
+  /* Média de atendimentos por dia no Multi:
+     conta os dias únicos com ao menos um atendimento e divide o total */
+  const diasUnicos = new Set(
+    multi
+      .map(m => { const d = parseBrDate(m.data); return d ? `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}` : null; })
+      .filter(Boolean)
+  ).size;
+  const mediaPorDia = diasUnicos > 0 ? (multi.length / diasUnicos).toFixed(1) : '—';
+  animateValueUpdate('statMediaPorDia', mediaPorDia);
+
   animateCounter('kpiJiraTotal',        jira.length,           900);
   animateCounter('kpiJiraConcluido',    jiraConcluidos.length, 900);
   animateCounter('kpiMultiTotal',       multi.length,          900);
@@ -520,28 +530,29 @@ function renderDashboard(jira, multi) {
   animateCounter('statNota10', multiComNota.filter(m => m.avaliacao === 10).length, 900);
 
   const statusColorMap = {
-    'Concluido':       COLORS.teal,
-    'Aguarda Externo': COLORS.blue,
-    'Aguarda Dev':     COLORS.amber,
+    'Concluido':       '#0E8F82',  // teal (mantido — indica sucesso)
+    'Aguarda Externo': '#2F5AA8',  // azul secundário apLIS
+    'Aguarda Dev':     '#FFC400',  // dourado apLIS
     'Cancelado':       COLORS.rose,
-    'Em Análise':      COLORS.amber
+    'Em Análise':      '#8A6100'   // dourado escuro apLIS
   };
   const statusSegments = sortEntriesDesc(countBy(jira, t => t.status))
     .map(([label, value]) => ({ label, value, color: statusColorMap[label] || COLORS.mute }));
-  const classeColorMap = { A: COLORS.rose, B: COLORS.amber, C: COLORS.mute };
+  const classeColorMap = { A: '#123877', B: '#FFC400', C: COLORS.mute };  // A=azul-marinho, B=dourado, C=neutro
   const classeSegments = sortEntriesDesc(countBy(jira, t => t.classe))
     .map(([label, value]) => ({ label: `Classe ${label}`, value, color: classeColorMap[label] || COLORS.mute }));
   const clienteItems = sortEntriesDesc(countBy(jira, t => t.cliente)).map(([label, value]) => ({ label, value }));
   const motivoItems  = sortEntriesDesc(countBy(multi, m => m.motivo)).map(([label, value]) => ({ label, value }));
   const notaCounts   = countBy(multiComNota, m => m.avaliacao.toFixed(0));
   const notaItems    = Object.keys(notaCounts).sort((a, b) => a - b).map(n => ({
-    label: `Nota ${n}`, value: notaCounts[n], color: +n >= 9 ? COLORS.teal : COLORS.rose
+    label: `Nota ${n}`, value: notaCounts[n],
+    color: +n >= 9 ? '#123877' : +n >= 7 ? '#2F5AA8' : '#FFC400'  // azul apLIS para boas notas, dourado para baixas
   }));
 
   drawDonutChart('statusChart', statusSegments);
   drawDonutChart('classeChart', classeSegments);
-  drawHBarChart('clienteChart', clienteItems, COLORS.amber);
-  drawHBarChart('motivoChart',  motivoItems,  COLORS.blue);
+  drawHBarChart('clienteChart', clienteItems, '#FFC400');  // dourado apLIS
+  drawHBarChart('motivoChart',  motivoItems,  '#123877');  // azul-marinho apLIS
   drawVBarChart('notaChart',    notaItems);
 
   rebuildJiraFilters(jira);
@@ -1182,8 +1193,18 @@ function criarCompCardMultiMes(labelTitulo, entradas, formatFn, gridEl, delay) {
    ========================================================== */
 
 const CORES_MESES = [
-  '#123877','#0E8F82','#FFC400','#C23A5D','#2F5AA8','#8A6100',
-  '#4DD9C8','#F4829A','#5C7EC0','#1B6E66','#D4870A','#8C2042'
+  '#123877', // azul-marinho apLIS
+  '#FFC400', // dourado apLIS
+  '#2F5AA8', // azul secundário apLIS
+  '#8A6100', // dourado escuro apLIS
+  '#1A4FA0', // azul médio
+  '#E6A800', // âmbar escuro
+  '#0D2D5E', // azul profundo
+  '#FFD84D', // dourado claro
+  '#4B7CC8', // azul claro
+  '#B38600', // dourado fosco
+  '#5C8FD6', // azul suave
+  '#CC9200'  // dourado quente
 ];
 
 /**
