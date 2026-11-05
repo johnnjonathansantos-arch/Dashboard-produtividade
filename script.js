@@ -25,6 +25,24 @@ const COLORS = {
   grid:      'rgba(18,56,119,.10)'
 };
 
+/** Retorna as cores ajustadas ao tema atual (lê as CSS vars do body). */
+function getThemeColors() {
+  const s = getComputedStyle(document.body);
+  const get = v => s.getPropertyValue(v).trim();
+  const dark = document.body.classList.contains('dark');
+  return {
+    amber:     get('--amber')     || '#FFC400',
+    amberText: get('--amber-text')|| (dark ? '#FFE066' : '#8A6100'),
+    teal:      get('--teal')      || (dark ? '#00E5CC' : '#0E8F82'),
+    rose:      get('--rose')      || (dark ? '#FF6B8A' : '#C23A5D'),
+    brand:     get('--brand')     || (dark ? '#FFC400' : '#123877'),
+    blue:      get('--brand-soft')|| (dark ? '#FFD84D' : '#2F5AA8'),
+    ink:       get('--ink')       || (dark ? '#F0F6FF' : '#1B2A4A'),
+    mute:      get('--mute')      || (dark ? '#8BA8CC' : '#64708C'),
+    grid:      dark ? 'rgba(255,196,0,.06)' : 'rgba(18,56,119,.10)'
+  };
+}
+
 const FONT = 'Inter, sans-serif';
 
 /* ==========================================================
@@ -228,10 +246,11 @@ function drawDonutChart(canvasId, segments) {
   if (!canvas) return;
   const cssHeight = isMobile() ? 150 : 190;
   const { ctx, width, height } = setupCanvas(canvas, cssHeight);
+  const C = getThemeColors();
   const total = segments.reduce((a, s) => a + s.value, 0);
 
   if (total === 0) {
-    ctx.fillStyle = COLORS.mute; ctx.font = `12px ${FONT}`;
+    ctx.fillStyle = C.mute; ctx.font = `12px ${FONT}`;
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText('Sem dados para o período', width / 2, height / 2);
     canvas._hitZones = []; return;
@@ -256,11 +275,11 @@ function drawDonutChart(canvasId, segments) {
   });
   canvas._hitZones = hitZones;
 
-  ctx.fillStyle = COLORS.ink;
+  ctx.fillStyle = C.ink;
   ctx.font = `600 20px ${FONT.replace('Inter', 'Space Grotesk')}`;
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillText(String(total), cx, cy - 6);
-  ctx.fillStyle = COLORS.mute; ctx.font = `10px ${FONT}`;
+  ctx.fillStyle = C.mute; ctx.font = `10px ${FONT}`;
   ctx.fillText('total', cx, cy + 12);
 
   const legendX = cx + radius + 22;
@@ -271,11 +290,11 @@ function drawDonutChart(canvasId, segments) {
   segments.forEach(seg => {
     ctx.fillStyle = seg.color;
     ctx.beginPath(); ctx.arc(legendX, y, 4, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = COLORS.ink; ctx.font = `500 11.5px ${FONT}`;
+    ctx.fillStyle = C.ink; ctx.font = `500 11.5px ${FONT}`;
     const pct   = ((seg.value / total) * 100).toFixed(0);
     const label = truncateText(ctx, seg.label, width - legendX - 46);
     ctx.fillText(label, legendX + 12, y);
-    ctx.fillStyle = COLORS.mute; ctx.font = `11px ${FONT}`;
+    ctx.fillStyle = C.mute; ctx.font = `11px ${FONT}`;
     ctx.textAlign = 'right';
     ctx.fillText(`${seg.value} · ${pct}%`, width - 2, y);
     ctx.textAlign = 'left';
@@ -304,6 +323,7 @@ function drawDonutChart(canvasId, segments) {
 function drawHBarChart(canvasId, items, color) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
+  const C = getThemeColors();
 
   const scrollContainer = canvas.parentElement;
   const panel           = scrollContainer ? scrollContainer.parentElement : canvas.parentElement;
@@ -318,7 +338,7 @@ function drawHBarChart(canvasId, items, color) {
     canvas.height = Math.max(1, Math.round(40 * dpr));
     const ctx = canvas.getContext('2d');
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, cssWidth, 40);
-    ctx.fillStyle = COLORS.mute; ctx.font = `12px ${FONT}`;
+    ctx.fillStyle = C.mute; ctx.font = `12px ${FONT}`;
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText('Sem dados para o período', cssWidth / 2, 20);
     return;
@@ -346,12 +366,12 @@ function drawHBarChart(canvasId, items, color) {
   items.forEach((item, i) => {
     const y    = i * rowH + rowH / 2 + 4;
     const barW = Math.max(3, (item.value / maxVal) * barAreaW);
-    ctx.fillStyle = COLORS.ink; ctx.font = `12px ${FONT}`; ctx.textAlign = 'left';
+    ctx.fillStyle = C.ink; ctx.font = `12px ${FONT}`; ctx.textAlign = 'left';
     const label = truncateText(ctx, item.label, labelW - 10);
     ctx.fillText(label, 0, y);
     roundRect(ctx, barX, y - 7, barW, 14, 5);
     ctx.fillStyle = color; ctx.fill();
-    ctx.fillStyle = COLORS.mute; ctx.font = `11px ${FONT}`;
+    ctx.fillStyle = C.mute; ctx.font = `11px ${FONT}`;
     ctx.fillText(String(item.value), barX + barW + 8, y);
   });
 
@@ -371,11 +391,12 @@ function drawHBarChart(canvasId, items, color) {
 function drawVBarChart(canvasId, items) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
+  const C = getThemeColors();
   const cssHeight = isMobile() ? 150 : 190;
   const { ctx, width, height } = setupCanvas(canvas, cssHeight);
 
   if (items.length === 0) {
-    ctx.fillStyle = COLORS.mute; ctx.font = `12px ${FONT}`;
+    ctx.fillStyle = C.mute; ctx.font = `12px ${FONT}`;
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText('Sem dados para o período', width / 2, height / 2);
     return;
@@ -395,10 +416,10 @@ function drawVBarChart(canvasId, items) {
     const y    = padTop + (chartH - barH);
     roundRect(ctx, x, y, barW, barH, 6);
     ctx.fillStyle = item.color; ctx.fill();
-    ctx.fillStyle = COLORS.ink; ctx.font = `600 12px ${FONT}`;
+    ctx.fillStyle = C.ink; ctx.font = `600 12px ${FONT}`;
     ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
     ctx.fillText(String(item.value), x + barW / 2, y - 5);
-    ctx.fillStyle = COLORS.mute; ctx.font = `11px ${FONT}`;
+    ctx.fillStyle = C.mute; ctx.font = `11px ${FONT}`;
     ctx.textBaseline = 'top';
     ctx.fillText(item.label, x + barW / 2, padTop + chartH + 6);
   });
@@ -1353,6 +1374,7 @@ function desenharBarrasComparativas(ctx) {
   const serie = dados.series[serieIndex];
   if (!serie) return;
 
+  const C    = getThemeColors();
   const dpr  = window.devicePixelRatio || 1;
   const ps   = getComputedStyle(container);
   const padC = (parseFloat(ps.paddingLeft) || 0) + (parseFloat(ps.paddingRight) || 0);
@@ -1372,7 +1394,7 @@ function desenharBarrasComparativas(ctx) {
   c.clearRect(0, 0, cssW, cssH);
 
   if (!n) {
-    c.fillStyle = COLORS.mute; c.font = `12px ${FONT}`;
+    c.fillStyle = C.mute; c.font = `12px ${FONT}`;
     c.textAlign = 'center'; c.textBaseline = 'middle';
     c.fillText('Sem dados para o período', cssW / 2, cssH / 2);
     return;
@@ -1399,16 +1421,16 @@ function desenharBarrasComparativas(ctx) {
   const lo = ticks[0], hi = ticks[ticks.length - 1];
   const yPos = v => hi === lo ? padT + cH / 2 : padT + cH - ((v - lo) / (hi - lo)) * cH;
 
-  c.strokeStyle = COLORS.grid; c.lineWidth = 1; c.setLineDash([3, 5]);
+  c.strokeStyle = C.grid; c.lineWidth = 1; c.setLineDash([3, 5]);
   c.beginPath();
   ticks.forEach(t => { c.moveTo(padL, yPos(t)); c.lineTo(padL + cW, yPos(t)); });
   c.stroke(); c.setLineDash([]);
 
-  c.fillStyle = COLORS.mute; c.font = `${mob ? 9 : 10}px ${FONT}`;
+  c.fillStyle = C.mute; c.font = `${mob ? 9 : 10}px ${FONT}`;
   c.textAlign = 'right'; c.textBaseline = 'middle';
   ticks.forEach(t => c.fillText(formatTickY(t, unidadeAxis), padL - 5, yPos(t)));
 
-  c.strokeStyle = COLORS.grid; c.lineWidth = 1;
+  c.strokeStyle = C.grid; c.lineWidth = 1;
   c.beginPath(); c.moveTo(padL, padT + cH); c.lineTo(padL + cW, padT + cH); c.stroke();
 
   ctx.hitZones = [];
@@ -1425,7 +1447,7 @@ function desenharBarrasComparativas(ctx) {
     const yB  = padT + cH;
 
     if (v === null) {
-      c.fillStyle = 'rgba(100,112,140,.10)';
+      c.fillStyle = document.body.classList.contains('dark') ? 'rgba(255,196,0,.08)' : 'rgba(100,112,140,.10)';
       roundRect(c, x, yB - 4, barW, 4, 3); c.fill();
     } else {
       const bH = Math.max(3, ((v - lo) / (hi - lo)) * cH);
@@ -1441,7 +1463,7 @@ function desenharBarrasComparativas(ctx) {
       c.fillText(fmt(v), x + barW / 2, yT - 3);
       ctx.hitZones.push({ x, y: yT, w: barW, h: bH, label: labels[i], val: v, cor, serie, iMes: i });
     }
-    c.fillStyle = COLORS.ink; c.font = `${mob ? 9 : 10}px ${FONT}`;
+    c.fillStyle = C.ink; c.font = `${mob ? 9 : 10}px ${FONT}`;
     c.textAlign = 'center'; c.textBaseline = 'top';
     c.fillText(labels[i], x + barW / 2, yB + 6);
   }
@@ -1564,6 +1586,58 @@ function ajustarAlturaTopbar() {
     sidebarEl.style.top = h + 'px'; sidebarEl.style.height = altSidebar; sidebarEl.style.maxHeight = altSidebar;
   }
 }
+
+/* ==========================================================
+   TEMA CLARO / ESCURO
+   ========================================================== */
+
+(function initTema() {
+  const btn       = document.getElementById('btnTema');
+  const labelEl   = document.getElementById('btnTemaLabel');
+  const STORAGE_KEY = 'sac_tema';
+
+  function aplicarTema(escuro, animar) {
+    if (!animar) {
+      // Desativa transições momentaneamente na carga inicial
+      document.documentElement.style.setProperty('--sidebar-anim', '0s');
+    }
+    document.body.classList.toggle('dark', escuro);
+    if (btn) {
+      btn.setAttribute('aria-pressed', String(escuro));
+    }
+    if (labelEl) {
+      labelEl.textContent = escuro ? 'Tema claro' : 'Tema escuro';
+    }
+    if (!animar) {
+      // Restaura transições após um frame
+      requestAnimationFrame(() => {
+        document.documentElement.style.removeProperty('--sidebar-anim');
+      });
+    }
+    // Redesenha gráficos para usar as novas cores do canvas
+    if (typeof renderDashboard === 'function') {
+      renderDashboard(_currentJira, _currentMulti);
+    }
+    redimensionarCompCharts();
+  }
+
+  // Carrega preferência salva ou usa preferência do sistema
+  const salvo = localStorage.getItem(STORAGE_KEY);
+  const prefereEscuro = salvo !== null
+    ? salvo === 'dark'
+    : window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+  aplicarTema(prefereEscuro, false);
+
+  if (btn) {
+    btn.addEventListener('click', () => {
+      const escuroAtual = document.body.classList.contains('dark');
+      const novoEstado  = !escuroAtual;
+      localStorage.setItem(STORAGE_KEY, novoEstado ? 'dark' : 'light');
+      aplicarTema(novoEstado, true);
+    });
+  }
+})();
 
 atualizarModoFiltro();
 aplicarFiltro();

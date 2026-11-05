@@ -60,6 +60,23 @@
           </button>
         </div>
 
+        <!-- Botão de tema claro/escuro -->
+        <button class="btn-tema" id="btnTema" type="button" aria-label="Alternar tema claro/escuro" aria-pressed="false">
+          <span class="btn-tema-label">
+            <!-- Ícone sol (tema claro ativo) -->
+            <svg class="icon-sol" width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="2"/>
+              <path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <!-- Ícone lua (tema escuro ativo) -->
+            <svg class="icon-lua" width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span id="btnTemaLabel">Tema escuro</span>
+          </span>
+          <span class="btn-tema-track" aria-hidden="true"></span>
+        </button>
+
         <!-- Seção: Modo de período -->
         <div class="sidebar-section">
           <span class="sidebar-section-label">Modo de período</span>
