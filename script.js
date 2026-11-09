@@ -589,8 +589,7 @@ function renderDashboard(jira, multi) {
       const d = parseBrDate(m.data);
       return d && d.getHours() === h;
     }).length;
-    const pct = h <= 11 ? '#2F5AA8' : h <= 13 ? '#FFC400' : '#123877'; // manhã=azul, meio-dia=dourado, tarde=marinho
-    picoItems.push({ label: `${String(h).padStart(2,'0')}h`, value: count, color: pct });
+    picoItems.push({ label: `${String(h).padStart(2,'0')}h`, value: count, color: '#123877' });
   }
   drawVBarChart('picoHoraChart', picoItems);
 
