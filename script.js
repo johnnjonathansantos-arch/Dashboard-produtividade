@@ -582,6 +582,31 @@ function renderDashboard(jira, multi) {
   drawHBarChart('motivoChart',  motivoItems,  '#123877');  // azul-marinho apLIS
   drawVBarChart('notaChart',    notaItems);
 
+  /* ----- Pico de atendimentos por hora (08h–18h) ----- */
+  const picoItems = [];
+  for (let h = 8; h <= 18; h++) {
+    const count = multi.filter(m => {
+      const d = parseBrDate(m.data);
+      return d && d.getHours() === h;
+    }).length;
+    const pct = h <= 11 ? '#2F5AA8' : h <= 13 ? '#FFC400' : '#123877'; // manhã=azul, meio-dia=dourado, tarde=marinho
+    picoItems.push({ label: `${String(h).padStart(2,'0')}h`, value: count, color: pct });
+  }
+  drawVBarChart('picoHoraChart', picoItems);
+
+  /* ----- Origem do chamado (WHATSAPP / SITE) ----- */
+  const origemComDados = multi.filter(m => m.origem);
+  const origemCounts   = countBy(origemComDados, m => m.origem);
+  const origemItems    = sortEntriesDesc(origemCounts).map(([label, value]) => ({
+    label,
+    value,
+    color: label === 'WHATSAPP' ? '#25D366' : '#123877'
+  }));
+  if (origemItems.length === 0) {
+    origemItems.push({ label: 'Sem dados de origem', value: 1, color: '#64708C' });
+  }
+  drawDonutChart('origemChart', origemItems);
+
   rebuildJiraFilters(jira);
   renderJiraTable(jira);
   rebuildMultiFilters(multi);
