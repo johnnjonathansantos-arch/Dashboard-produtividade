@@ -56,8 +56,14 @@ function carregarDadosImportados() {
   try {
     const jiraJson  = localStorage.getItem(LS_KEY_JIRA);
     const multiJson = localStorage.getItem(LS_KEY_MULTI);
-    if (jiraJson)  _importedJira  = JSON.parse(jiraJson);
-    if (multiJson) _importedMulti = JSON.parse(multiJson);
+    if (jiraJson) {
+      const ticketsBase = new Set(jiraData.map(r => r.ticket));
+      _importedJira = JSON.parse(jiraJson).filter(r => !ticketsBase.has(r.ticket));
+    }
+    if (multiJson) {
+      const protocolosBase = new Set(multiData.map(r => r.protocolo));
+      _importedMulti = JSON.parse(multiJson).filter(r => !protocolosBase.has(r.protocolo));
+    }
   } catch (e) {
     console.warn('[localStorage] Falha ao restaurar dados importados:', e);
     _importedJira  = [];
